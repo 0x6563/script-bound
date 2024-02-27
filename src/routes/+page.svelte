@@ -1,6 +1,5 @@
 <script lang="ts">
     import { onMount } from 'svelte';
-    import { ObjectMutationObserver } from 'object-mutation-observer';
     import { SampleConfig, SampleCSS, SampleData } from '@services/sample';
     import { TryJson } from '@services/ut';
     import DataBound from '../lib/data-bound/data-bound.svelte';
@@ -70,6 +69,7 @@
         height: 100%;
         width: 100%;
     }
+
     h1 {
         margin: 0;
         padding: 8px 16px;

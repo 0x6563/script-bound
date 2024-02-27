@@ -1,24 +1,27 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import type { FrameSet, WorkspaceConfig } from '../lib/types';
-    import Multi from '../containers/multi.svelte';
-    import Single from '../containers/single.svelte';
-    import Tabbed from '../containers/tabbed.svelte';
-    import Navigator from '../containers/navigator.svelte';
-    import type { Context } from '../lib/context';
+    import { onMount } from "svelte";
+    import type { ComponentContext, WorkspaceConfig } from "../lib/types";
+    import Multi from "../containers/multi.svelte";
+    import Single from "../containers/single.svelte";
+    import Tabbed from "../containers/tabbed.svelte";
+    import type { Context } from "../lib/context";
 
-    export let data: any;
     export let config: WorkspaceConfig;
     export let context: Context;
-    let frames: FrameSet = [];
-    $: type = 'single';
+    let frames: ComponentContext = [];
+    $: type = "single";
 
     onMount(() => {
         // OpenFrame('', config.initial, data);
     });
 
-    export function OpenFrame(label: string, frameName: string, data: any) {
-        const frame = { label, data, config: context.application.layout(frameName) };
+    export function OpenFrame(label: string, layout: string, bind: string) {
+        const frame = {
+            label,
+            context,
+            bind,
+            config: context.application.layout(layout),
+        };
         frames.push(frame);
         frames = frames;
         return frame;
@@ -34,7 +37,6 @@
         multi: Multi,
         single: Single,
         tabbed: Tabbed,
-        navigator: Navigator,
     };
 </script>
 

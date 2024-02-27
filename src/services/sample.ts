@@ -7,13 +7,13 @@ export const SampleConfig: DataBoundConfig = {
             "header": "Frame",
             "sections": [
                 {
-                    "header": "section",
                     "type": "section",
+                    "header": "section",
                     "direction": "top-bottom",
                     "sections": [
                         {
-                            "header": "section",
                             "type": "section",
+                            "header": "section",
                             "direction": "left-right",
                             "bind": "$.personal",
                             "sections": [
@@ -28,30 +28,30 @@ export const SampleConfig: DataBoundConfig = {
                             ]
                         },
                         {
-                            "header": "section",
                             "type": "section",
+                            "header": "section",
                             "direction": "left-right",
                             "bind": "$.personal",
                             "sections": [
                                 {
-                                    "header": "First Name",
                                     "type": "input",
+                                    "header": "First Name",
                                     "bind": "$.firstName",
                                     "component": {
                                         "type": "text"
                                     }
                                 },
                                 {
-                                    "header": "First Name",
                                     "type": "input",
+                                    "header": "First Name",
                                     "bind": "$.firstName",
                                     "component": {
                                         "type": "text"
                                     }
                                 },
                                 {
+                                    "type": "input",
                                     "header": "Last Name",
-                                    "type": "input",
                                     "bind": "$.lastName",
                                     "component": {
                                         "type": "text"
@@ -60,8 +60,8 @@ export const SampleConfig: DataBoundConfig = {
                             ]
                         },
                         {
-                            "header": "section",
                             "type": "section",
+                            "header": "section",
                             "direction": "top-bottom",
                             "sections": [
                                 {
@@ -75,8 +75,8 @@ export const SampleConfig: DataBoundConfig = {
                             ]
                         },
                         {
-                            "header": "section",
                             "type": "section",
+                            "header": "section",
                             "direction": "left-right",
                             "sections": [
                                 {
@@ -106,10 +106,14 @@ export const SampleConfig: DataBoundConfig = {
                             ]
                         },
                         {
-                            "header": "Contacts",
                             "type": "list",
+                            "header": "Contacts",
                             "bind": "$.contact",
                             "direction": "top-bottom",
+                            "container": {
+                                "type": "tabbed",
+                                "direction":"left-right"
+                            },
                             "section": {
                                 "type": "section",
                                 "sections": [

@@ -13,10 +13,11 @@ export interface ListConfig extends BaseConfig, RenderFlow {
     type: 'list';
     bind: string;
     section: RenderConfig;
-    container?: {
-        type: 'single' | 'multi' | 'tabbed' | 'navigator';
-        keep?: 'initial' | 'first' | 'last' | 'all';
-    }
+    container?: ContainerSingleConfig | ContainerMultiConfig | ContainerTabbedConfig;
+    // container?: {
+    //     type: 'single' | 'multi' | 'tabbed' | 'navigator';
+    //     keep?: 'initial' | 'first' | 'last' | 'all';
+    // }
 }
 export interface WorkspaceConfig extends BaseConfig, RenderFlow {
     type: 'workspace';
@@ -24,10 +25,26 @@ export interface WorkspaceConfig extends BaseConfig, RenderFlow {
         bind: string;
         layout: string;
     }
-    container?: {
-        type: 'single' | 'multi' | 'tabbed' | 'navigator';
-        keep?: 'initial' | 'first' | 'last' | 'all';
-    }
+    container?: ContainerSingleConfig | ContainerMultiConfig | ContainerTabbedConfig;
+}
+
+export interface ContainerSingleConfig extends BaseElementConfig {
+    type: 'single';
+}
+
+export interface ContainerMultiConfig extends BaseElementConfig {
+    type: 'multi'
+}
+
+export interface ContainerTabbedConfig extends BaseElementConfig {
+    type: 'tabbed'
+    direction?: FlowDirection;
+}
+
+export interface OutputConfig extends BaseConfig {
+    type: 'output';
+    bind: string;
+    component: ComponentConfig;
 }
 
 export interface InputConfig extends BaseConfig {
@@ -46,9 +63,11 @@ export interface ComponentConfig {
     type: string;
 }
 
-export interface BaseConfig {
+export interface BaseElementConfig {
     id?: string;
     class?: string;
+}
+export interface BaseConfig extends BaseElementConfig {
     bind?: string;
     header?: string;
     footer?: string;
@@ -63,7 +82,7 @@ export type FlowDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom
 export type FlowWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
 
 export type RenderConfig = SectionConfig | ListConfig | InputConfig;
-export type FrameSet = {
+export type ComponentContext = {
     label: string;
     context: Context;
     bind: string;

@@ -1,9 +1,9 @@
 <script lang="ts">
-    import type { FrameSet } from '../lib/types';
+    import type { ComponentContext, ContainerSingleConfig } from '../lib/types';
     import Renderer from '../renderer.svelte';
 
-    export let frames: FrameSet = [];
-    export let config: any = {};
+    export let frames: ComponentContext = [];
+    export let config: ContainerSingleConfig = {} as ContainerSingleConfig;
     $: frame = frames[frames.length - 1];
 </script>
 
