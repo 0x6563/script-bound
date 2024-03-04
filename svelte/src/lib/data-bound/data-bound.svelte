@@ -1,3 +1,24 @@
+<svelte:options
+	customElement={{
+		tag: 'custom-element',
+		shadow: 'none',
+		props: {
+			name: { reflect: true, type: 'Number', attribute: 'element-index' }
+		},
+		extend: (customElementConstructor) => {
+			// Extend the class so we can let it participate in HTML forms
+			return class extends customElementConstructor {
+				static formAssociated = true;
+
+				constructor() {
+					super();
+					this.attachedInternals = this.attachInternals();
+				} 
+			};
+		}
+	}}
+/>
+
 <script lang="ts">
   import { createEventDispatcher, onMount } from 'svelte';
   import Renderer from './renderer.svelte';
