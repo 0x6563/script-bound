@@ -1,0 +1,15 @@
+input {
+    color: red;
+    border: none;
+    border-bottom: 2px solid black;
+}
+
+input:focus {
+    outline: none;
+    border-bottom: 2px solid blue;
+}
+
+[data-element="content"] {
+    border: solid 1px #bbb;
+    padding: 8px !important;
+}

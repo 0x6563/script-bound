@@ -1,0 +1,1 @@
+{ "personal": { "firstName": "Jane", "lastName": "Doe", "address": "", "city": "", "state": "", "zip": "" }, "contact": [{ "type": "home", "phoneNumber": "555-555-0000" }, { "type": "cell", "phoneNumber": "555-555-1111" }, { "type": "cell", "phoneNumber": "555-555-2222" }] }

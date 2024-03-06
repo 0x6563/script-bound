@@ -1,0 +1,27 @@
+{
+  "name": "data-bound",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "jsonpath-plus": "^8.1.0",
+    "monaco-editor": "^0.46.0",
+    "object-mutation-observer": "^2.0.5",
+    "vue": "^3.4.21"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^5.0.4",
+    "sass": "^1.71.1",
+    "typescript": "^5.3.3",
+    "vite": "^5.1.5",
+    "vue-tsc": "^2.0.5"
+  },
+  "sideEffects": [
+    "**/*.vue"
+  ]
+}

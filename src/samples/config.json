@@ -1,0 +1,148 @@
+{
+    "layouts": {
+        "main": {
+            "type": "section",
+            "header": "Frame",
+            "sections": [
+                {
+                    "type": "section",
+                    "header": "section",
+                    "direction": "top-bottom",
+                    "sections": [
+                        {
+                            "type": "section",
+                            "header": "section",
+                            "direction": "left-right",
+                            "bind": "$.personal",
+                            "sections": [
+                                {
+                                    "type": "output",
+                                    "header": "Path",
+                                    "bind": "@path",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "header": "section",
+                            "direction": "left-right",
+                            "bind": "$.personal",
+                            "sections": [
+                                {
+                                    "type": "input",
+                                    "header": "First Name",
+                                    "bind": "$.firstName",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                },
+                                {
+                                    "type": "input",
+                                    "header": "First Name",
+                                    "bind": "$.firstName",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                },
+                                {
+                                    "type": "input",
+                                    "header": "Last Name",
+                                    "bind": "$.lastName",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "header": "section",
+                            "direction": "top-bottom",
+                            "sections": [
+                                {
+                                    "header": "Address",
+                                    "type": "input",
+                                    "bind": "$.personal.address",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "section",
+                            "header": "section",
+                            "direction": "left-right",
+                            "sections": [
+                                {
+                                    "header": "City",
+                                    "type": "input",
+                                    "bind": "$.personal.city",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                },
+                                {
+                                    "header": "State",
+                                    "type": "input",
+                                    "bind": "$.personal.state",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                },
+                                {
+                                    "header": "Zip",
+                                    "type": "input",
+                                    "bind": "$.personal.zip",
+                                    "component": {
+                                        "type": "text"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "list",
+                            "header": "Contacts",
+                            "bind": "$.contact",
+                            "direction": "top-bottom",
+                            "container": {
+                                "type": "tabbed",
+                                "direction": "left-right"
+                            },
+                            "section": {
+                                "type": "section",
+                                "sections": [
+                                    {
+                                        "header": "Path",
+                                        "type": "input",
+                                        "bind": "@path",
+                                        "component": {
+                                            "type": "text"
+                                        }
+                                    },
+                                    {
+                                        "type": "input",
+                                        "bind": "$.type",
+                                        "component": {
+                                            "type": "text"
+                                        }
+                                    },
+                                    {
+                                        "type": "input",
+                                        "bind": "$.phoneNumber",
+                                        "component": {
+                                            "type": "text"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
