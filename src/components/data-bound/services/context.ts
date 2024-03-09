@@ -1,66 +1,109 @@
 import { JSONPath } from 'jsonpath-plus';
 import type { DataBoundApplication } from './application';
-// import type { ChangeCallback } from 'object-mutation-observer/dist/types';
 export class Context {
-    private path: string;
+    private path?: string;
     private scopes: { [key: string]: Context };
+    private $data: any;
+    private children: Set<Context> = new Set();
+    private meta: { [key: string]: any } = {};
+    private $state = { lock: false, hide: false };
+
+    get state() {
+        return { ...this.$state }
+    }
+
     application: DataBoundApplication;
-    data: any;
 
-    constructor({ data, scopes, path, application }: ContextConfig) {
-        this.path = path || '';
-        this.scopes = Object.assign({}, scopes);
-        this.scopes.root = this.scopes.root || this;
-        this.data = data;
-        this.application = application;
+    get data() {
+        return this.access(this.path).value;
     }
-
-    get(path: string) {
-        return this.resolve(path).value;
-    }
-
-    set(path: string, value: any) {
-        const { parent, parentProperty } = this.resolve(path);
+    set data(value: any) {
+        const { parent, parentProperty } = this.access(this.path);
         if (parentProperty) {
             parent[parentProperty] = value;
         }
     }
 
-    watch(path: string, callback: any) {
-        const r = this.resolve(path);
-        this.application.observer.watch(this.data, r.pointer, callback);
+    constructor({ data, scopes, path, application, meta }: ContextConfig) {
+        this.path = path;
+        this.$data = data;
+        this.scopes = { ...scopes, root: scopes?.root || this, parent: scopes?.parent || this }
+        this.application = application;
+        if (meta) {
+            this.meta = meta;
+        } else {
+            this.meta.path = this.path;
+        }
+    }
+
+    watch(callback: any): void;
+    watch(path: string, callback: any): void;
+    watch(path: string | any, callback?: any): void {
+        if (typeof path == 'function') {
+            this.application.observer.watch(this.$data, path);
+            return;
+        }
+
+        const { parent, parentProperty } = this.access(path);
+        this.application.observer.watch(parent, parentProperty || '', callback);
+    }
+
+    onDataChange(callback: (changed: []) => void) {
+        this.watch('$', callback);
+    }
+
+    onStateChange(callback: (changed: []) => void) {
+
     }
 
     fork(path: string) {
-        const r = this.resolve(path);
-        const { path: p, value } = r;
-        return new Context({ data: value, scopes: { ...this.scopes, parent: this }, path: p, application: this.application });
-    }
-
-    resolve(path: string): Result {
-        if (path == '@path')
-            return {
-                parent: this.scopes.parent?.data,
-                parentProperty: this.path,
-                pointer: this.path,
-                path: this.path,
-                value: this.path
-            };
-        if (path == '@empty')
-            return {
-                parent: null,
-                parentProperty: '',
-                pointer: '',
-                path: '',
-                value: {}
-            };
-
-        if (/^\$[a-z\d]+\./i.test(path)) {
-            return this.scopes[path.slice(1, path.indexOf('.'))].resolve(path.slice(path.indexOf('.') + 1))
+        let parent;
+        if (this.path || !this.scopes.parent) {
+            parent = this;
+        } else {
+            parent = this.scopes.parent.path ? this.scopes.parent : this.scopes.parent.scopes.parent
         }
-        return JSONPath({ path, json: this.data, resultType: 'all', wrap: false });
+        let isMeta = this.isMetaPath(path);
+        const context = new Context({
+            data: isMeta ? this.$data : this.data,
+            scopes: {
+                ...this.scopes,
+                host: this,
+                parent
+            },
+            path,
+            meta: isMeta ? this.meta : undefined,
+            application: this.application
+        });
+        this.children.add(context);
+        return context;
     }
 
+    disconnect() {
+        this.scopes.host?.children.delete(this);
+    }
+
+    private access(path: string = '$'): Result {
+        if (this.isScopePath(path))
+            return this.scopes[path.slice(1, path.indexOf('.'))].access(path.slice(path.indexOf('.') + 1));
+
+        if (this.isMetaPath(path)) {
+            return this.resolve(this.meta, path.slice(1));
+        }
+        return this.resolve(this.$data, path);
+    }
+
+    private isScopePath(path: string = '$') {
+        return /^\$[a-z\d]+/i.test(path);
+    }
+
+    private isMetaPath(path: string = '$') {
+        return (/^@[a-z\d]+/i.test(path));
+    }
+
+    private resolve(json: any, path: string, resultType: 'value' | 'path' | 'pointer' | 'parent' | 'parentProperty' | 'all' = 'all') {
+        return JSONPath({ path, json, resultType, wrap: false });
+    }
 }
 
 export interface ContextConfig {
@@ -68,6 +111,9 @@ export interface ContextConfig {
     path?: string;
     scopes?: {
         [key: string]: Context;
+    }
+    meta?: {
+        [key: string]: any
     }
     application: DataBoundApplication;
 }

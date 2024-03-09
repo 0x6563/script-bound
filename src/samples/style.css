@@ -9,7 +9,7 @@ input:focus {
     border-bottom: 2px solid blue;
 }
 
-[data-element="content"] {
+[data-renderer] {
     border: solid 1px #bbb;
     padding: 8px !important;
 }

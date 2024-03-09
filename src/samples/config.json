@@ -1,140 +1,147 @@
 {
     "layouts": {
         "main": {
-            "type": "section",
-            "header": "Frame",
-            "sections": [
+            "type": "container",
+            "layouts": [
                 {
-                    "type": "section",
-                    "header": "section",
-                    "direction": "top-bottom",
-                    "sections": [
+                    "type": "container",
+                    "flow": "top-bottom",
+                    "layouts": [
                         {
-                            "type": "section",
-                            "header": "section",
-                            "direction": "left-right",
+                            "type": "container",
+                            "flow": "left-right",
                             "bind": "$.personal",
-                            "sections": [
+                            "layouts": [
                                 {
                                     "type": "output",
-                                    "header": "Path",
                                     "bind": "@path",
                                     "component": {
-                                        "type": "text"
+                                        "name": "html"
+                                    }
+                                },
+                                {
+                                    "type": "output",
+                                    "bind": "$root.html",
+                                    "component": {
+                                        "name": "html"
                                     }
                                 }
                             ]
                         },
                         {
-                            "type": "section",
-                            "header": "section",
-                            "direction": "left-right",
+                            "type": "container",
+                            "flow": "left-right",
                             "bind": "$.personal",
-                            "sections": [
+                            "layouts": [
                                 {
                                     "type": "input",
-                                    "header": "First Name",
                                     "bind": "$.firstName",
                                     "component": {
-                                        "type": "text"
+                                        "label": "First Name",
+                                        "name": "text"
                                     }
                                 },
                                 {
                                     "type": "input",
-                                    "header": "First Name",
                                     "bind": "$.firstName",
                                     "component": {
-                                        "type": "text"
+                                        "label": "First Name",
+                                        "name": "text"
                                     }
                                 },
                                 {
                                     "type": "input",
-                                    "header": "Last Name",
                                     "bind": "$.lastName",
                                     "component": {
-                                        "type": "text"
+                                        "label": "Last Name",
+                                        "name": "text"
                                     }
                                 }
                             ]
                         },
                         {
-                            "type": "section",
-                            "header": "section",
-                            "direction": "top-bottom",
-                            "sections": [
+                            "type": "container",
+                            "flow": "top-bottom",
+                            "layouts": [
                                 {
-                                    "header": "Address",
                                     "type": "input",
                                     "bind": "$.personal.address",
                                     "component": {
-                                        "type": "text"
+                                        "label": "Address",
+                                        "name": "text"
                                     }
                                 }
                             ]
                         },
                         {
-                            "type": "section",
-                            "header": "section",
-                            "direction": "left-right",
-                            "sections": [
+                            "type": "container",
+                            "flow": "left-right",
+                            "layouts": [
                                 {
-                                    "header": "City",
                                     "type": "input",
                                     "bind": "$.personal.city",
                                     "component": {
-                                        "type": "text"
+                                        "label": "City",
+                                        "name": "text"
                                     }
                                 },
                                 {
-                                    "header": "State",
                                     "type": "input",
                                     "bind": "$.personal.state",
                                     "component": {
-                                        "type": "text"
+                                        "label": "State",
+                                        "name": "text"
                                     }
                                 },
                                 {
-                                    "header": "Zip",
                                     "type": "input",
                                     "bind": "$.personal.zip",
                                     "component": {
-                                        "type": "text"
+                                        "label": "Zip",
+                                        "name": "text"
                                     }
                                 }
                             ]
                         },
                         {
+                            "type": "output",
+                            "bind": "@path",
+                            "component": {
+                                "name": "html"
+                            }
+                        },
+                        {
                             "type": "list",
-                            "header": "Contacts",
                             "bind": "$.contact",
-                            "direction": "top-bottom",
-                            "container": {
-                                "type": "tabbed",
-                                "direction": "left-right"
+                            "component": {
+                                "name": "tabs",
+                                "side": "left"
                             },
-                            "section": {
-                                "type": "section",
-                                "sections": [
+                            "layout": {
+                                "type": "container",
+                                "layouts": [
                                     {
-                                        "header": "Path",
                                         "type": "input",
                                         "bind": "@path",
                                         "component": {
-                                            "type": "text"
+                                            "label": "Index",
+                                            "name": "text"
                                         }
                                     },
                                     {
                                         "type": "input",
                                         "bind": "$.type",
                                         "component": {
-                                            "type": "text"
+                                            "label": "Type",
+                                            "name": "text"
                                         }
                                     },
                                     {
                                         "type": "input",
                                         "bind": "$.phoneNumber",
                                         "component": {
-                                            "type": "text"
+                                            "label": "Phone",
+                                            "name": "text"
                                         }
                                     }
                                 ]

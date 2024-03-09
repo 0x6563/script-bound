@@ -1,88 +1,116 @@
 import type { Context } from "./context";
 
 export interface DataBoundConfig {
-    layouts: { [key: string]: RenderConfig } & { main: RenderConfig };
+    layouts: {
+        main: ControlStructure;
+        [key: string]: ControlStructure;
+    };
 }
 
-export interface ComponentConfig {
-    type: string;
+export type ControlStructure<T extends ComponentConfig = ComponentConfig> = WorkspaceConfig<T> | ContainerConfig<T> | ListConfig<T> | InputConfig<T> | OutputConfig<T>;
+
+export interface ConstrolStructureComponentProps {
+    config: ContainerConfig;
+    context: Context;
 }
 
-export interface BaseElementConfig {
-    id?: string;
-    class?: string;
-}
-export interface BaseConfig extends BaseElementConfig {
-    bind?: string;
-    header?: string;
-    footer?: string;
-}
-
-export interface SectionConfig extends BaseConfig, RenderFlow {
-    type: 'section';
-    sections: RenderConfig[];
-}
-
-export interface ListConfig extends BaseConfig, RenderFlow {
-    type: 'list';
-    bind: string;
-    section: RenderConfig;
-    container?: ContainerSingleConfig | ContainerMultiConfig | ContainerTabbedConfig;
-}
-
-export interface WorkspaceConfig extends BaseConfig, RenderFlow {
+export interface WorkspaceConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors {
     type: 'workspace';
     initial: {
         bind: string;
         layout: string;
     }
-    container?: ContainerSingleConfig | ContainerMultiConfig | ContainerTabbedConfig;
+    component: T;
+}
+export interface ContainerConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors {
+    type: 'container';
+    layouts: ControlStructure[];
+    component: T;
 }
 
-export interface ContainerSingleConfig extends BaseElementConfig {
-    type: 'single';
+export interface ListConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors {
+    type: 'list';
+    layout: ControlStructure;
+    component: T;
 }
 
-export interface ContainerMultiConfig extends BaseElementConfig {
-    type: 'multi'
-}
-
-export interface ContainerTabbedConfig extends BaseElementConfig {
-    type: 'tabbed'
-    direction?: FlowDirection;
-}
-
-export interface OutputConfig extends BaseConfig {
-    type: 'output';
-    bind: string;
-    component: ComponentConfig;
-}
-
-export interface InputConfig extends BaseConfig {
+export interface InputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors, PreProcessors, PostProcessors {
     type: 'input';
-    bind: string;
-    component: ComponentConfig;
+    component: T;
 }
 
-export interface OutputConfig extends BaseConfig {
+export interface OutputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors, PreProcessors {
     type: 'output';
-    bind: string;
-    component: ComponentConfig;
+    component: T;
 }
 
-
-export interface RenderFlow {
-    direction?: FlowDirection
-    wrap?: FlowWrap;
-
+export interface ContainerComponentProps<T extends ComponentConfig> {
+    config: ContainerConfig<T>;
+    context: Context;
 }
+
+export interface ListComponentProps<T extends ComponentConfig> {
+    config: ListConfig<T>;
+    items: ComponentContext;
+}
+
+export interface ContainerFlowConfig extends LayoutFlow {
+    name: 'flow';
+}
+
+export interface ListSingleConfig {
+    name: 'single';
+}
+
+export interface ListMultiConfig extends LayoutFlow {
+    name: 'multi';
+}
+
+export interface ListTabbedConfig {
+    name: 'tabs';
+    side?: PositionalSide;
+}
+
+export type ComponentConfig = {
+    name: string;
+};
+
+export interface PreProcessors {
+    preprocessors?: string[]
+}
+
+export interface PostProcessors {
+    postprocessors?: string[]
+}
+
+export interface Bindable {
+    bind?: string;
+    rebind?: boolean;
+}
+
+export interface CSSSelectors {
+    id?: string;
+    class?: string;
+}
+
+export interface LayoutFlow {
+    flow?: FlowDirection
+    wrap?: boolean;
+}
+
+export interface Lockable {
+    lock?: boolean | string;
+}
+
+export interface Hideable {
+    hide?: boolean | string;
+}
+
 export type FlowDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
-export type FlowWrap = 'nowrap' | 'wrap';
+export type PositionalSide = 'left' | 'right' | 'bottom' | 'top';
 
-export type RenderConfig = SectionConfig | ListConfig | InputConfig;
 export type ComponentContext = {
     label: string;
     context: Context;
     bind: string;
-    config: RenderConfig
 }[];

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { watch, ref } from 'vue';
 import DataBound from './components/data-bound/DataBound.ce.vue';
-import Code from './components/Code.vue';
+import Code from './components/Code.ce.vue';
 import SampleData from './samples/data.json';
 import SampleConfig from './samples/config.json';
 import SampleCSS from './samples/style.css?raw';
@@ -52,7 +52,7 @@ function OnChange() {
       </div>
       <div class="flx top-bottom">
         <h1 class="shrink">CSS</h1>
-        <Code :value=style language="css" width="fill" height="fill" @edit="style = $event" />
+        <Code :value=style language="scss" width="fill" height="fill" @edit="style = $event" />
       </div>
     </div>
 

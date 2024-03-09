@@ -1,6 +1,5 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-
 export default defineConfig({
   plugins: [
     vue({
@@ -13,12 +12,19 @@ export default defineConfig({
   ],
   build: {
     lib: {
-      entry: './src/main.ce.ts',
+      entry: './src/custom-elements/data-bound.ce.ts',
       name: 'data-bound',
-      fileName: 'data-bound'
+      fileName: 'data-bound',
+
+
+
+      // entry: [
+      //   // "./src/custom-elements/code.ce.ts",
+      //   "./src/custom-elements/data-bound.ce.ts"
+      // ], 
+      // fileName: (_, entryName) => {
+      //   return `js/${entryName}.js`;
+      // },
     }
-  },
-  define: {
-    'process.env': process.env
   }
 })
