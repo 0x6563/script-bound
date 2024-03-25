@@ -6,7 +6,7 @@ import { GetComponent } from "../../services/registry";
 const props = defineProps<ConstrolStructureComponentProps>();
 
 const state = reactive({
-    component: GetComponent('container', props.config?.component?.name || 'flow'),
+    component: GetComponent('container', props.config?.component || 'flow'),
 })
 </script>
 

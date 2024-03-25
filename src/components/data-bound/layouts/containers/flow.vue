@@ -1,13 +1,13 @@
 <script lang="ts" setup>
-import Renderer from "../../Renderer.vue";
+import Renderer from "../../renderer.vue";
 import { type ContainerFlowConfig, ContainerComponentProps } from "../../services/types";
 import { GetLayoutFlow } from "../../services/layout-flow";
 import { reactive, watch } from "vue";
 
 const props = defineProps<ContainerComponentProps<ContainerFlowConfig>>();
-const state = reactive(GetLayoutFlow(props.config.component));
+const state = reactive(GetLayoutFlow(props.config.settings));
 watch(props, () => {
-    const { wrap, flow } = GetLayoutFlow(props.config.component);
+    const { wrap, flow } = GetLayoutFlow(props.config.settings);
     state.wrap = wrap;
     state.flow = flow;
 })

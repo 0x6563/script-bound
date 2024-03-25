@@ -1,4 +1,4 @@
-data-bound {
+[data-bound-application] {
     [data-layout] {
         margin: 0;
         padding: 0;
@@ -71,7 +71,7 @@ data-bound {
             [data-element="label"] {
                 border-right: solid 2px rgba(0, 0, 0, 0);
 
-                &[data-visible="true"] {
+                &[data-active="true"] {
                     border-right: solid 2px black;
                 }
             }
@@ -83,7 +83,7 @@ data-bound {
             [data-element="label"] {
                 border-left: solid 2px rgba(0, 0, 0, 0);
 
-                &[data-visible="true"] {
+                &[data-active="true"] {
                     border-left: solid 2px black;
                 }
             }
@@ -95,7 +95,7 @@ data-bound {
             [data-element="label"] {
                 border-bottom: solid 2px rgba(0, 0, 0, 0);
 
-                &[data-visible="true"] {
+                &[data-active="true"] {
                     border-bottom: solid 2px black;
                 }
             }
@@ -107,7 +107,7 @@ data-bound {
             [data-element="label"] {
                 border-top: solid 2px rgba(0, 0, 0, 0);
 
-                &[data-visible="true"] {
+                &[data-active="true"] {
                     border-top: solid 2px black;
                 }
             }
@@ -130,10 +130,14 @@ data-bound {
             [data-element="viewport-child"] {
                 display: none;
 
-                &[data-visible="true"] {
+                &[data-active="true"] {
                     display: block;
                 }
             }
         }
+    }
+
+    [data-bound-label] {
+        font-size: .7em;
     }
 }

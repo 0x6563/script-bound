@@ -1,78 +1,94 @@
 import { JSONPath } from 'jsonpath-plus';
 import type { DataBoundApplication } from './application';
+import { Bindable, Hideable, Lockable } from './types';
+
 export class Context {
-    private path?: string;
+    private bind?: string;
+    private hide?: string | boolean;
+    private lock?: string | boolean;
     private scopes: { [key: string]: Context };
     private $data: any;
     private children: Set<Context> = new Set();
     private meta: { [key: string]: any } = {};
     private $state = { lock: false, hide: false };
 
+    private $events = new EventTarget();
+
     get state() {
         return { ...this.$state }
     }
 
-    application: DataBoundApplication;
-
     get data() {
-        return this.access(this.path).value;
+        return this.resolve(this.bind).value;
     }
+
     set data(value: any) {
-        const { parent, parentProperty } = this.access(this.path);
+        const { parent, parentProperty } = this.resolve(this.bind);
         if (parentProperty) {
             parent[parentProperty] = value;
         }
     }
 
-    constructor({ data, scopes, path, application, meta }: ContextConfig) {
-        this.path = path;
+    application: DataBoundApplication;
+    private dataListener = () => this.$events.dispatchEvent(new CustomEvent('data'));
+    constructor({ data, scopes, bind, lock, hide, application, meta }: ContextConfig) {
+        this.bind = bind;
+        this.lock = lock;
+        this.hide = hide;
         this.$data = data;
-        this.scopes = { ...scopes, root: scopes?.root || this, parent: scopes?.parent || this }
+        this.scopes = { ...scopes, root: scopes?.root || this, relative: scopes?.relative || this }
         this.application = application;
         if (meta) {
             this.meta = meta;
         } else {
-            this.meta.path = this.path;
+            this.meta.bind = this.bind;
+        }
+        this.reval();
+        this.addEventListener('data', () => this.reval());
+        this.application.observer.watch(this.$data, this.dataListener)
+    }
+
+    onDestroy() {
+        this.application.observer.unwatch(this.$data, this.dataListener)
+    }
+
+    addEventListener(type: 'data' | 'state', callback: (detail: any) => void) {
+        this.$events.addEventListener(type, ((e: CustomEvent<string[]>) => { callback(e.detail) }) as any);
+
+    }
+    removeEventListener(type: 'data' | 'state', callback: () => void) {
+        this.$events.removeEventListener(type, callback);
+    }
+    reval() {
+        const changes: string[] = [];
+        const hide = this.application.test(this.data, this.hide);
+        const lock = this.application.test(this.data, this.lock);
+        if (hide != this.$state.hide) {
+            changes.push('hide');
+            this.$state.hide = hide;
+        }
+        if (lock != this.$state.lock) {
+            changes.push('lock');
+            this.$state.lock = lock;
+        }
+        if (changes.length) {
+            this.$events.dispatchEvent(new CustomEvent('state', { detail: changes }))
         }
     }
 
-    watch(callback: any): void;
-    watch(path: string, callback: any): void;
-    watch(path: string | any, callback?: any): void {
-        if (typeof path == 'function') {
-            this.application.observer.watch(this.$data, path);
-            return;
-        }
-
-        const { parent, parentProperty } = this.access(path);
-        this.application.observer.watch(parent, parentProperty || '', callback);
-    }
-
-    onDataChange(callback: (changed: []) => void) {
-        this.watch('$', callback);
-    }
-
-    onStateChange(callback: (changed: []) => void) {
-
-    }
-
-    fork(path: string) {
-        let parent;
-        if (this.path || !this.scopes.parent) {
-            parent = this;
-        } else {
-            parent = this.scopes.parent.path ? this.scopes.parent : this.scopes.parent.scopes.parent
-        }
-        let isMeta = this.isMetaPath(path);
+    fork({ bind, hide, lock }: Bindable & Lockable & Hideable) {
+        const relative = this.findNearestBoundContext();
+        const config = PathResolver.IsMetaPath(bind) ? { data: this.$data, meta: relative.meta } : { data: this.data };
         const context = new Context({
-            data: isMeta ? this.$data : this.data,
+            ...config,
             scopes: {
                 ...this.scopes,
-                host: this,
-                parent
+                parent: this,
+                relative
             },
-            path,
-            meta: isMeta ? this.meta : undefined,
+            bind,
+            hide,
+            lock,
             application: this.application
         });
         this.children.add(context);
@@ -80,35 +96,51 @@ export class Context {
     }
 
     disconnect() {
-        this.scopes.host?.children.delete(this);
+        this.scopes.parent?.children.delete(this);
     }
 
-    private access(path: string = '$'): Result {
-        if (this.isScopePath(path))
-            return this.scopes[path.slice(1, path.indexOf('.'))].access(path.slice(path.indexOf('.') + 1));
-
-        if (this.isMetaPath(path)) {
-            return this.resolve(this.meta, path.slice(1));
+    private findNearestBoundContext(): Context {
+        if (this.bind) {
+            return this;
+        } else if (this.scopes.relative?.bind) {
+            return this.scopes.relative
+        } else if (this.scopes?.relative?.scopes?.relative) {
+            return this.scopes.relative.scopes.relative
+        } else {
+            return this;
         }
-        return this.resolve(this.$data, path);
     }
 
-    private isScopePath(path: string = '$') {
+    private resolve(path: string = '$'): Result {
+        if (PathResolver.IsScopePath(path))
+            return this.scopes[path.slice(1, path.indexOf('.'))].resolve(path.slice(path.indexOf('.') + 1));
+
+        if (PathResolver.IsMetaPath(path)) {
+            return PathResolver.Resolve(this.meta, path.slice(1));
+        }
+        return PathResolver.Resolve(this.$data, path);
+    }
+
+}
+
+class PathResolver {
+
+    static IsScopePath(path: string = '$') {
         return /^\$[a-z\d]+/i.test(path);
     }
 
-    private isMetaPath(path: string = '$') {
+    static IsMetaPath(path: string = '$') {
         return (/^@[a-z\d]+/i.test(path));
     }
 
-    private resolve(json: any, path: string, resultType: 'value' | 'path' | 'pointer' | 'parent' | 'parentProperty' | 'all' = 'all') {
+    static Resolve(json: any, path: string, resultType: 'value' | 'path' | 'pointer' | 'parent' | 'parentProperty' | 'all' = 'all') {
         return JSONPath({ path, json, resultType, wrap: false });
     }
 }
 
-export interface ContextConfig {
+
+export interface ContextConfig extends Hideable, Lockable, Bindable {
     data: any;
-    path?: string;
     scopes?: {
         [key: string]: Context;
     }

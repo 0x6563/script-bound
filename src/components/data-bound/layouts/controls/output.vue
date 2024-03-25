@@ -1,22 +1,23 @@
 <script lang="ts" setup>
-import { reactive } from "vue";
+import { onUnmounted, reactive } from "vue";
 import type { ConstrolStructureComponentProps } from "../../services/types";
 import { GetComponent } from "../../services/registry";
 const props = defineProps<ConstrolStructureComponentProps>();
-
-let value: any;
-props.context.onDataChange(Refresh);
-Refresh();
-
-function Refresh() {
-    value = props.context.data;
-}
-
 const state = reactive({
-    component: GetComponent('output', props.config?.component?.name || 'html'),
+    component: GetComponent('output', props.config?.component || 'html'),
+    value: props.context.data
 })
+const stateChange = () => {
+    state.value = props.context.data;
+};
+
+props.context.addEventListener('state', stateChange);
+onUnmounted(() => {
+    props.context.removeEventListener('state', stateChange);
+})
+
 </script>
 
 <template>
-    <component :is="state.component" :value="value" />
+    <component :is="state.component" :config="config" :value="state.value" />
 </template>

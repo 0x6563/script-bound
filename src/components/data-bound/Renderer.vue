@@ -1,39 +1,49 @@
 <script lang="ts" setup>
-import { reactive, watch } from "vue";
+import { onUnmounted, reactive, watch } from "vue";
 import type { Context } from "./services/context";
 import { GetComponent } from "./services/registry";
 import type { ControlStructure } from "./services/types";
 
 interface ComponentProps {
   context: Context;
-  bind: string | undefined;
+  bind?: string;
   config: ControlStructure
 }
 
-const props = withDefaults(defineProps<ComponentProps>(), { bind: undefined });
+const props = defineProps<ComponentProps>();
 
 const state = reactive({
-  component: GetComponent('control', props.config?.type || 'section'),
+  component: GetComponent('control', props.config?.type),
+  hide: false,
+  lock: false
 })
 
 watch(() => props.config.type, () => {
-  state.component = GetComponent('control', props.config?.type || 'section')
+  state.component = GetComponent('control', props.config?.type)
 })
-let localContext = props.context;
 
-if (typeof props.bind != "undefined") {
-  localContext = props.context.fork(props.bind);
-} else if (props.config.bind) {
-  localContext = props.context.fork(props.config.bind);
-}
+const { hide, lock, bind } = props.config;
+const context = props.context.fork({
+  bind: props?.bind || bind,
+  hide,
+  lock
+});
 
-if (!localContext) {
-  localContext = props.context;
-}
+state.hide = context.state.hide;
+const stateChange = () => {
+  state.hide = context.state.hide;
+  state.lock = context.state.lock;
+};
+
+context.addEventListener('state', stateChange)
+onUnmounted(() => {
+  context.removeEventListener('state', stateChange);
+  context.onDestroy();
+})
 </script>
 
 <template>
-  <div :id="props.config.id" :class="props.config.class" data-renderer>
-    <component :is="state.component" :config="config" :context="localContext" />
+  <div v-if="!state.hide" :id="props.config.id" :class="props.config.class" data-renderer>
+    <component :is="state.component" :config="config" :context="context" />
   </div>
 </template>

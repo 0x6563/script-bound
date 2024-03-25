@@ -1,5 +1,5 @@
 import { defineCustomElement } from 'vue'
-import DataBoundComponent from '../components/data-bound/DataBound.ce.vue'
+import DataBoundComponent from '../components/data-bound/data-bound.ce.vue'
 
 const DataBound = defineCustomElement(DataBoundComponent);
 

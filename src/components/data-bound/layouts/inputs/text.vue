@@ -15,7 +15,7 @@ function OnChange(e: any) {
 
 <template>
     <label>
-        <div>{{ config.component?.label || '&nbsp;' }}</div>
-        <input type="text" :value=value @change="OnChange($event)" />
+        <input type="text" :value=value @change="OnChange($event)" placeholder=" "/>
+        <div data-bound-label>{{ config.settings?.label || '&nbsp;' }}</div>
     </label>
 </template>

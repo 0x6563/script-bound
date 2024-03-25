@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import Renderer from './Renderer.vue';
+import Renderer from './renderer.vue';
 import type { DataBoundConfig } from './services/types';
 import { Context } from './services/context';
 import { DataBoundApplication } from './services/application';
@@ -25,7 +25,7 @@ application.observer.watch(application.data, () => {
 </script>
 
 <template>
-  <div>
+  <div data-bound-application>
     <Renderer :config=config.layouts.main :context=context />
   </div>
 </template>

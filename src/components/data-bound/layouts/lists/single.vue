@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { ListComponentProps, ListSingleConfig } from "../../services/types";
-import Renderer from "../../Renderer.vue";
+import Renderer from "../../renderer.vue";
 import { computed } from "vue";
 const props = defineProps<ListComponentProps<ListSingleConfig>>();
 let item = computed(() => props.items[props.items.length - 1]);

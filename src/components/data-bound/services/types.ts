@@ -5,6 +5,10 @@ export interface DataBoundConfig {
         main: ControlStructure;
         [key: string]: ControlStructure;
     };
+    rules?: {
+        [key: string]: string;
+    }
+    style?: string
 }
 
 export type ControlStructure<T extends ComponentConfig = ComponentConfig> = WorkspaceConfig<T> | ContainerConfig<T> | ListConfig<T> | InputConfig<T> | OutputConfig<T>;
@@ -14,34 +18,40 @@ export interface ConstrolStructureComponentProps {
     context: Context;
 }
 
-export interface WorkspaceConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors {
+export interface WorkspaceConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors {
     type: 'workspace';
     initial: {
         bind: string;
         layout: string;
     }
-    component: T;
+    component: string;
+    settings: T;
 }
-export interface ContainerConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors {
+export interface ContainerConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors {
     type: 'container';
     layouts: ControlStructure[];
-    component: T;
+    component: string;
+    settings: T;
 }
 
-export interface ListConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors {
+export interface ListConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors {
     type: 'list';
     layout: ControlStructure;
-    component: T;
+    component: string;
+    settings: T;
 }
 
-export interface InputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors, PreProcessors, PostProcessors {
+export interface InputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors, PreProcessors, PostProcessors {
     type: 'input';
-    component: T;
+    component: string;
+    settings: T;
 }
 
-export interface OutputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, CSSSelectors, PreProcessors {
+export interface OutputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors, PreProcessors {
     type: 'output';
-    component: T;
+    layout?: string;
+    component: string;
+    settings: T;
 }
 
 export interface ContainerComponentProps<T extends ComponentConfig> {
@@ -71,9 +81,7 @@ export interface ListTabbedConfig {
     side?: PositionalSide;
 }
 
-export type ComponentConfig = {
-    name: string;
-};
+export type ComponentConfig = {};
 
 export interface PreProcessors {
     preprocessors?: string[]
@@ -88,7 +96,7 @@ export interface Bindable {
     rebind?: boolean;
 }
 
-export interface CSSSelectors {
+export interface QuerySelectors {
     id?: string;
     class?: string;
 }

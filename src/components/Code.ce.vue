@@ -4,7 +4,7 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { editor } from 'monaco-editor';
 
 interface ComponentProps {
-    value: string;
+    value: string | any;
     language: string;
     minHeight: number;
     maxHeight: number;
@@ -36,6 +36,9 @@ let codeEditor: editor.IStandaloneCodeEditor;
 // let Monaco: any;
 
 watch(props, () => {
+    if (typeof props.value != 'string') {
+        props.value = JSON.stringify(props.value, null, 2);
+    }
     if (codeEditor && props.value != codeEditor.getValue()) {
         codeEditor.setValue(props.value);
         resize();
@@ -72,7 +75,7 @@ onMounted(() => {
         }
 
         codeEditor = editor.create(container.value, {
-            value: props.value,
+            value: typeof props.value == 'string' ? props.value : JSON.stringify(props.value, null, 2),
             language: props.language,
             theme: props.theme,
             scrollBeyondLastLine: false,

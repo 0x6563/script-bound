@@ -1,33 +1,41 @@
 <script lang="ts" setup>
-import { watch, ref } from 'vue';
-import DataBound from './components/data-bound/DataBound.ce.vue';
-import Code from './components/Code.ce.vue';
+import { watch, ref, reactive } from 'vue';
+import DataBound from './components/data-bound/data-bound.ce.vue';
+import Code from './components/code.ce.vue';
 import SampleData from './samples/data.json';
-import SampleConfig from './samples/config.json';
-import SampleCSS from './samples/style.css?raw';
+import SampleXML from './samples/sample.xml?raw';
+import { ParseConfigString } from './services/config';
 import { DataBoundConfig } from './components/data-bound/services/types';
+import { Subject, debounceTime } from 'rxjs';
 
+const $cinterval = new Subject<string>();
 const styletag = ref<HTMLStyleElement>();
+const state = reactive<{
+  config?: DataBoundConfig,
+  data: any,
+  mode: string,
+}>({
+  config: undefined,
+  data: SampleData,
+  mode: 'form'
+})
 
-let config = ref(SampleConfig as DataBoundConfig);
-let data = ref(SampleData);
-let configString = ref(JSON.stringify(SampleConfig, null, 2));
+let configString = ref(SampleXML);
 let dataString = ref(JSON.stringify(SampleData, null, 2));
-let style = ref(SampleCSS);
 
-watch([styletag, style], () => {
-  if (styletag) {
-    (styletag.value as any).innerHTML = style.value;
-  }
+$cinterval.pipe(debounceTime(2000)).subscribe((value) => {
+  state.config = ParseConfigString(value);
+  (styletag.value as any).innerHTML = state.config?.style;
 })
 
-watch(configString, () => {
-  config.value = TryJson(configString.value, config.value);
-})
+watch(configString, () => ($cinterval.next(configString.value)), { immediate: true })
 
 watch(dataString, () => {
-  data.value = TryJson(dataString.value, data.value);
+  state.data = TryJson(dataString.value, state.data);
 })
+function NextItem(current: string, items: string[]) {
+  return items[(items.indexOf(current) + 1) % items.length]
+}
 
 function TryJson(json: string, fallback?: any) {
   try {
@@ -38,35 +46,26 @@ function TryJson(json: string, fallback?: any) {
   return fallback;
 }
 function OnChange() {
-  dataString.value = JSON.stringify(data.value, null, 2);
+  dataString.value = JSON.stringify(state.data, null, 2);
 } 
 </script>
 
 <template>
   <div class="body flx">
     <component is="style" ref=styletag> </component>
-    <div class="flx top-bottom">
+    <div class="flx">
       <div class="flx top-bottom">
         <h1 class="shrink">Config</h1>
-        <Code :value=configString width="fill" height="fill" @edit="configString = $event" />
-      </div>
-      <div class="flx top-bottom">
-        <h1 class="shrink">CSS</h1>
-        <Code :value=style language="scss" width="fill" height="fill" @edit="style = $event" />
+        <Code :value=configString language="html" width="fill" height="fill" @edit="configString = $event" />
       </div>
     </div>
 
     <div class="flx top-bottom">
-      <div class="flx top-bottom">
-        <h1>Form</h1>
-        <data-bound>
-          <DataBound :data=data :config=config @change=OnChange></DataBound>
-        </data-bound>
-      </div>
-      <div class="flx top-bottom">
-        <h1 class="shrink">Data</h1>
-        <Code :value=dataString width="fill" height="fill" />
-      </div>
+      <h1 v-on:click="state.mode = NextItem(state.mode, ['form', 'data', 'config'])"> {{ state.mode }}</h1>
+      <DataBound v-if="state.mode == 'form' && state.config" :data=state.data :config=state.config @change=OnChange>
+      </DataBound>
+      <Code v-if="state.mode == 'data'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />
+      <Code v-if="state.mode == 'config'" :value=state.config width="fill" height="fill" />
     </div>
   </div>
 </template>

@@ -1,11 +1,22 @@
 <script lang="ts" setup>
-withDefaults(defineProps<{
-    value: string
+import { reactive, watch } from 'vue';
+import { OutputConfig } from '../../services/types';
+const props = withDefaults(defineProps<{
+    value: string,
+    config: OutputConfig<{}>
 }>(), {
     value: ''
 })
 
+const state = reactive({
+    content: props.config.layout || props.value
+})
+
+watch(props, () => {
+    state.content = props.config.layout || props.value
+})
+
 </script>
 <template>
-    <div v-html=value> </div>
+    <div v-html=state.content> </div>
 </template>

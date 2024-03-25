@@ -1,0 +1,110 @@
+lexer: {{
+    start: "root"
+
+    root ->
+        - import: commentL
+        - when: "<" tag: "lbracket" highlight: "tag" goto: tag
+        - when: /[^<]+/ tag: "text"
+
+    tag -> 
+        - import: commentL
+        - when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ tag:"word" highlight: "tag"
+        - when: /\s+/ tag: "space" 
+        - when: "=" tag: "="
+        - when: ">" tag: "rbracket"  highlight: "tag" pop
+        - when: "/" tag: "slash" 
+        - import: json
+    
+    commentL ->
+        - when: "<!--" tag: "lcomment" goto: commentR
+
+    commentR ->
+        unmatched: "text"
+        - when: "-->" tag: "rcomment" pop
+
+    json ->
+        - when: /\s+/ tag: "space"
+        - when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ tag: "number" highlight: "number"
+        - when: /"/ tag: "dquote" highlight:"string" goto: string 
+        - when: "{" tag: "{" goto: json
+        - when: "}" tag: "}" pop
+        - when: "[" tag: "[" goto: json
+        - when: "]" tag: "]" pop
+        - when: "," tag: ","
+        - when: ":" tag: ":"
+        - when: "true" tag: "true" highlight: "keyword"
+        - when: "false" tag: "false" highlight: "keyword"
+        - when: "null" tag: "null" highlight: "keyword"
+
+    string ->
+        - when: /\\./ tag: "escaped" highlight:"string"
+        - when: "\"" tag: "dquote" highlight:"string" pop
+        - when: /[^\\"]/ tag: "string" highlight: "string"
+}}
+
+grammar: {{
+    // Uncomment the line below to allow experimental diagram generation
+	// postprocessorOverride: ${ _ =>_ }
+
+    xml -> node : {{ { nodes: $0 ?[$0]:[] } }}
+        | xml _ node : {{ { nodes: $2 ? $0.nodes.concat($2): $0.nodes }  }}
+
+    node -> element  : {{ $0 }}
+        | text : {{ $0 }}
+        | comment : {{ null }}
+
+    text -> $text : {{ { text: $0.value } }}
+
+    comment -> $lcomment $text $rcomment : {{ null }}
+
+    element -> elementOpen _ ">" _ xml _ elementClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: $4.nodes} }}
+        | elementOpen  _ "/" ">" : {{ { tag: $0.tag, attributes: $0.attributes, nodes:[] } }}
+        | elementOpen _ ">"  _ elementClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [] } }}
+
+    elementOpen -> "<" $word __ attributes : {{ { tag: $1.value, attributes: $3 } }}
+        | "<" $word : {{ { tag: $1.value, attributes: [] } }}
+    
+    elementClose ->  "<" "/" $word ">" 
+
+    attributes -> kv : {{ { [$0.key]: $0.value } }}
+        | attributes _ kv : {{ { ...$0 ,[$2.key]: $2.value }  }} 
+
+    kv -> $word "=" json : {{ { key: $0.value, value: $2 } }}
+        | $word : {{ { key:$0.value , value: '' } }}
+
+
+    json : {{ $0 }} ->
+        object 
+        | array
+        | quoted
+        | number 
+        | "true" : {{ true }}
+        | "false" : {{ false }}
+        | "null" : {{ null }}
+
+    quoted -> $dquote  $dquote : {{ "" }}
+            | $dquote string  $dquote : {{ $1 }}
+    string -> $escaped : {{  $0.value }}
+        | $string : {{  $0.value }}
+        | string $escaped : {{ $0 + $1.value }}
+        | string $string : {{ $0 + $1.value }}
+
+    object -> "{" _ "}" : {{ {} }}
+        | "{" _ json_pair _ "}"  : {{ $2 }}
+
+    array -> "[" _ "]" : {{ [] }}
+        | "[" _ json_list _ "]"  : {{ $2 }} 
+
+    json_list -> json : {{ [ $0 ] }}
+        | json_list _ "," _ json : {{ $0.concat($4) }}
+    
+    json_pair -> pair : {{ $0 }}
+        | json_pair _ "," _ pair : {{ { ...$0, ...$4 } }}
+
+    pair -> quoted:k _ ":" _ json:v : {{ { [$k]: $v } }}
+
+    number -> $number : {{ Number($0.value) }}
+
+    _ -> $space?
+    __ -> $space
+}}

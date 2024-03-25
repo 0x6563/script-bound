@@ -14,17 +14,15 @@
                             "layouts": [
                                 {
                                     "type": "output",
-                                    "bind": "@path",
-                                    "component": {
-                                        "name": "html"
-                                    }
+                                    "bind": "@bind",
+                                    "component": "html",
+                                    "settings": {}
                                 },
                                 {
                                     "type": "output",
                                     "bind": "$root.html",
-                                    "component": {
-                                        "name": "html"
-                                    }
+                                    "component": "html",
+                                    "settings": {}
                                 }
                             ]
                         },
@@ -36,25 +34,26 @@
                                 {
                                     "type": "input",
                                     "bind": "$.firstName",
-                                    "component": {
-                                        "label": "First Name",
-                                        "name": "text"
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "First Name"
                                     }
                                 },
                                 {
                                     "type": "input",
+                                    "hide": "isJane",
                                     "bind": "$.firstName",
-                                    "component": {
-                                        "label": "First Name",
-                                        "name": "text"
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "First Name"
                                     }
                                 },
                                 {
                                     "type": "input",
                                     "bind": "$.lastName",
-                                    "component": {
-                                        "label": "Last Name",
-                                        "name": "text"
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "Last Name"
                                     }
                                 }
                             ]
@@ -66,9 +65,9 @@
                                 {
                                     "type": "input",
                                     "bind": "$.personal.address",
-                                    "component": {
-                                        "label": "Address",
-                                        "name": "text"
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "Address"
                                     }
                                 }
                             ]
@@ -80,41 +79,40 @@
                                 {
                                     "type": "input",
                                     "bind": "$.personal.city",
-                                    "component": {
-                                        "label": "City",
-                                        "name": "text"
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "City"
                                     }
                                 },
                                 {
                                     "type": "input",
                                     "bind": "$.personal.state",
-                                    "component": {
-                                        "label": "State",
-                                        "name": "text"
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "State"
                                     }
                                 },
                                 {
                                     "type": "input",
                                     "bind": "$.personal.zip",
-                                    "component": {
-                                        "label": "Zip",
-                                        "name": "text"
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "Zip"
                                     }
                                 }
                             ]
                         },
                         {
                             "type": "output",
-                            "bind": "@path",
-                            "component": {
-                                "name": "html"
-                            }
+                            "bind": "@bind",
+                            "component": "html",
+                            "settings": {}
                         },
                         {
                             "type": "list",
                             "bind": "$.contact",
-                            "component": {
-                                "name": "tabs",
+                            "component": "tabs",
+                            "settings": {
                                 "side": "left"
                             },
                             "layout": {
@@ -122,26 +120,26 @@
                                 "layouts": [
                                     {
                                         "type": "input",
-                                        "bind": "@path",
-                                        "component": {
-                                            "label": "Index",
-                                            "name": "text"
+                                        "bind": "@bind",
+                                        "component": "text",
+                                        "settings": {
+                                            "label": "Index"
                                         }
                                     },
                                     {
                                         "type": "input",
                                         "bind": "$.type",
-                                        "component": {
-                                            "label": "Type",
-                                            "name": "text"
+                                        "component": "text",
+                                        "settings": {
+                                            "label": "Type"
                                         }
                                     },
                                     {
                                         "type": "input",
                                         "bind": "$.phoneNumber",
-                                        "component": {
-                                            "label": "Phone",
-                                            "name": "text"
+                                        "component": "text",
+                                        "settings": {
+                                            "label": "Phone"
                                         }
                                     }
                                 ]
@@ -151,5 +149,8 @@
                 }
             ]
         }
+    },
+    "rules": {
+        "isJane": "$ =='Jane'"
     }
 }

@@ -1,0 +1,55 @@
+<layouts>
+    <main>
+        <container flow="top-bottom">
+            <container flow="left-right" bind="$.personal">
+                <output type="html" bind="@bind" />
+                <output type="html" bind="@bind">
+                    <b>Test strings</b> some text
+                    <script>Should be Removed</script>
+                </output>
+                <output type="html" bind="@bind" />
+                <output type="html" bind="$root.html" />
+            </container>
+            <container flow="left-right" bind="$.personal">
+                <input type="text" bind="$.firstName" label="First Name" />
+                <input type="text" bind="$.firstName" label="First Name" hide="isJane"/>
+                <input type="text" bind="$.lastName" label="Last Name" />
+            </container>
+            <container flow="top-bottom">
+                <input type="text" bind="$.personal.address" label="Address" />
+            </container>
+            <container flow="left-right">
+                <input type="text" bind="$.personal.city" label="City" />
+                <input type="text" bind="$.personal.state" label="State" />
+                <input type="text" bind="$.personal.zip" label="Zip" />
+            </container>
+            <list bind="$.contact" type="tabs" side="left">
+                <container>
+                    <output type="html" bind="@bind" />
+                    <input type="text" bind="$.type" />
+                    <input type="text" bind="$.phoneNumber" />
+                </container>
+            </list>
+        </container>
+    </main>
+</layouts>
+<rules>
+    <rule id="isJane">$ =='Jane'</rule>
+</rules>
+<style>
+    input {
+        color: red;
+        border: none;
+        border-bottom: 2px solid black;
+    }
+
+    input:focus {
+        outline: none;
+        border-bottom: 2px solid blue;
+    }
+
+    [data-renderer] {
+        border: solid 1px #bbb;
+        padding: 8px !important;
+    }
+</style>

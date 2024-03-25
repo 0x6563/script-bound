@@ -51,5 +51,5 @@ interface ComponentRegistry {
     [key: string]: any;
 }
 export function GetComponent(control: keyof typeof Registry, name: string) {
-    return Registry[control][name] || Registry.debug.error;
+    return Registry[control]?.[name] || Registry.debug.error;
 }
