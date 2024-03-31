@@ -3,18 +3,52 @@ lexer: {{
 
     root ->
         - import: commentL
-        - when: "<" tag: "lbracket" highlight: "tag" goto: tag
+        - when: /</ tag: "lbracket" goto: tagName
         - when: /[^<]+/ tag: "text"
 
-    tag -> 
-        - import: commentL
-        - when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ tag:"word" highlight: "tag"
+    tagName -> 
+        - when: /script[a-z_A-Z\d\-:!]+/ 
+            tag:"word" 
+            highlight: "tag"
+            set: tagAttr
+        - when: /script(?!:[a-z])/ 
+            tag:"word" 
+            highlight: "tag"
+            set: scriptAttr
+
+        - when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ 
+            tag:"word" 
+            highlight: "tag"
+            set: tagAttr
+        - when: "/" tag: "slash" 
+    
+    tagAttr -> 
+        - when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ 
+            tag:"word" 
+            highlight: "attribute.name"
         - when: /\s+/ tag: "space" 
         - when: "=" tag: "="
-        - when: ">" tag: "rbracket"  highlight: "tag" pop
+        - when: ">" tag: "rbracket"  pop
         - when: "/" tag: "slash" 
         - import: json
     
+    scriptAttr -> 
+        - when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ 
+            tag:"word" 
+            highlight: "attribute.name"
+        - when: /\s+/ tag: "space" 
+        - when: "=" tag: "="
+        - when: ">" tag: "rbracket"  set: scriptClose
+        - when: "/" tag: "slash" 
+        - import: json
+
+    scriptClose ->
+        unmatched: "text"
+        -when: "</script>" 
+            tag: "close"
+            highlight: "tag" 
+            pop
+
     commentL ->
         - when: "<!--" tag: "lcomment" goto: commentR
 
@@ -25,21 +59,21 @@ lexer: {{
     json ->
         - when: /\s+/ tag: "space"
         - when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ tag: "number" highlight: "number"
-        - when: /"/ tag: "dquote" highlight:"string" goto: string 
-        - when: "{" tag: "{" goto: json
+        - when: /"/ tag: "dquote" highlight:"attribute.value" goto: string1 
+        - when: "{" tag: "{"  goto: json
         - when: "}" tag: "}" pop
-        - when: "[" tag: "[" goto: json
+        - when: "[" tag: "[" highlight:"delimiter" goto: json
         - when: "]" tag: "]" pop
-        - when: "," tag: ","
+        - when: "," tag: "," 
         - when: ":" tag: ":"
         - when: "true" tag: "true" highlight: "keyword"
         - when: "false" tag: "false" highlight: "keyword"
         - when: "null" tag: "null" highlight: "keyword"
 
-    string ->
-        - when: /\\./ tag: "escaped" highlight:"string"
-        - when: "\"" tag: "dquote" highlight:"string" pop
-        - when: /[^\\"]/ tag: "string" highlight: "string"
+    string1 ->
+        - when: /\\./ tag: "escaped" highlight:"attribute.value.escape"
+        - when: "\"" tag: "dquote" highlight:"attribute.value" pop
+        - when: /[^\\"]/ tag: "string" highlight: "attribute.value"
 }}
 
 grammar: {{
@@ -49,9 +83,10 @@ grammar: {{
     xml -> node : {{ { nodes: $0 ?[$0]:[] } }}
         | xml _ node : {{ { nodes: $2 ? $0.nodes.concat($2): $0.nodes }  }}
 
-    node -> element  : {{ $0 }}
-        | text : {{ $0 }}
+    node : {{ $0 }} -> element
+        | text
         | comment : {{ null }}
+        | script
 
     text -> $text : {{ { text: $0.value } }}
 
@@ -65,6 +100,15 @@ grammar: {{
         | "<" $word : {{ { tag: $1.value, attributes: [] } }}
     
     elementClose ->  "<" "/" $word ">" 
+
+    script -> scriptOpen _ ">" _ text _ scriptClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [$4]} }}
+        | scriptOpen  _ "/" ">" : {{ { tag: $0.tag, attributes: $0.attributes, nodes:[] } }}
+        | scriptOpen _ ">"  _ scriptClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [] } }}
+
+    scriptOpen -> "<" "script" __ attributes : {{ { tag: $1.value, attributes: $3 } }}
+        | "<" "script" : {{ { tag: $1.value, attributes: [] } }}
+    
+    scriptClose ->  "</script>" 
 
     attributes -> kv : {{ { [$0.key]: $0.value } }}
         | attributes _ kv : {{ { ...$0 ,[$2.key]: $2.value }  }} 
@@ -84,6 +128,7 @@ grammar: {{
 
     quoted -> $dquote  $dquote : {{ "" }}
             | $dquote string  $dquote : {{ $1 }}
+
     string -> $escaped : {{  $0.value }}
         | $string : {{  $0.value }}
         | string $escaped : {{ $0 + $1.value }}

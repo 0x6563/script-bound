@@ -1,16 +1,16 @@
 import { JSONPath } from 'jsonpath-plus';
 import type { DataBoundApplication } from './application';
 import { Bindable, Hideable, Lockable } from './types';
-
+import { GetValueType, Value } from 'moderate-code-interpreter';
 export class Context {
     private bind?: string;
     private hide?: string | boolean;
     private lock?: string | boolean;
-    private scopes: { [key: string]: Context };
     private $data: any;
     private children: Set<Context> = new Set();
-    private meta: { [key: string]: any } = {};
     private $state = { lock: false, hide: false };
+    meta: { [key: string]: any } = {};
+    scopes: { [key: string]: Context };
 
     private $events = new EventTarget();
 
@@ -43,8 +43,8 @@ export class Context {
         } else {
             this.meta.bind = this.bind;
         }
-        this.reval();
-        this.addEventListener('data', () => this.reval());
+        this.checkState();
+        this.addEventListener('data', () => this.checkState());
         this.application.observer.watch(this.$data, this.dataListener)
     }
 
@@ -56,13 +56,15 @@ export class Context {
         this.$events.addEventListener(type, ((e: CustomEvent<string[]>) => { callback(e.detail) }) as any);
 
     }
+
     removeEventListener(type: 'data' | 'state', callback: () => void) {
         this.$events.removeEventListener(type, callback);
     }
-    reval() {
+
+    checkState() {
         const changes: string[] = [];
-        const hide = this.application.test(this.data, this.hide);
-        const lock = this.application.test(this.data, this.lock);
+        const hide = this.application.test(this.proxy(), this.hide);
+        const lock = this.application.test(this.proxy(), this.lock);
         if (hide != this.$state.hide) {
             changes.push('hide');
             this.$state.hide = hide;
@@ -121,6 +123,63 @@ export class Context {
         return PathResolver.Resolve(this.$data, path);
     }
 
+    proxy() {
+        const r: any = {};
+        for (const key in this.scopes) {
+            r['$' + key] = ContextProxy(this.scopes[key]);
+        }
+        r.$ = ValueProxy(this.data);
+        return r;
+    }
+}
+function ContextProxy(source: Context) {
+    const p = Value('object', new Proxy(source, {
+        get(target, key) {
+            if (typeof key == 'symbol')
+                return target[key];
+            if (PathResolver.IsScopePath(key as string)) {
+                return ContextProxy(source.scopes[(key as string).slice(1)])
+            } else if (PathResolver.IsMetaPath(key as string)) {
+                return ValueProxy(target.meta[(key as string).slice(1)])
+            } else if (key == '$') {
+                return ValueProxy(target.data);
+            } else {
+                return ValueProxy(target.data[key])
+            }
+        },
+        ownKeys(target) {
+            return Object.keys(target.data);
+        },
+        getOwnPropertyDescriptor(target, key) {
+            return { enumerable: true, configurable: true, value: p[key] };
+        }
+    }));
+    return p;
+}
+
+function ValueProxy(source) {
+    const srctype = GetValueType(source);
+    if (srctype == 'object' || srctype == 'array')
+        return Value(srctype, ObjectProxy(source));
+    return Value(srctype as any, source);
+}
+
+function ObjectProxy(source: object | any[]) {
+    const p = new Proxy(source, {
+        get(target, key) {
+            if (typeof key == 'symbol')
+                return target[key];
+            return ValueProxy(target[key])
+        },
+        ownKeys(target) {
+            return Object.keys(target);
+        },
+        getOwnPropertyDescriptor(_, key) {
+            return { enumerable: true, configurable: true, value: p[key] };
+        }
+    });
+    return p;
+
 }
 
 class PathResolver {
@@ -137,7 +196,6 @@ class PathResolver {
         return JSONPath({ path, json, resultType, wrap: false });
     }
 }
-
 
 export interface ContextConfig extends Hideable, Lockable, Bindable {
     data: any;

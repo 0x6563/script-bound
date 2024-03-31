@@ -1,4 +1,5 @@
 import { ObjectMutationObserver } from "object-mutation-observer";
+import { Parse, Run } from "moderate-code-interpreter";
 import type { DataBoundConfig } from "./types";
 
 export class DataBoundApplication {
@@ -40,12 +41,28 @@ export class DataBoundApplication {
     }
 
 }
-const cache: any = {};
 
 function FunctionFactory(s: string) {
-    // TODO: Replace with not Moderate Code Interpreter.
-    if (!(s in cache)) {
-        cache[s] = new Function('$', `return ${s}`);
+    try {
+        const tree = Parse(s);
+        return (scopes) => {
+            try {
+                const parseStart = performance.now();
+                console.log(scopes)
+                const result = (Run(tree, { ...scopes }) as any)?.value
+                console.log(result)
+                console.log(performance.now() - parseStart)
+                return result;
+            } catch (error) {
+                console.log(error)
+            }
+        };
+    } catch (error) {
+        console.log(error);
+        return () => false;
     }
-    return cache[s];
+}
+
+function JSFunctionFactory(s: string) {
+    return new Function('$', `return ${s}`);
 }

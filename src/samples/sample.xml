@@ -1,5 +1,5 @@
 <layouts>
-    <main>
+    <layout id="main">
         <container flow="top-bottom">
             <container flow="left-right" bind="$.personal">
                 <output type="html" bind="@bind" />
@@ -31,11 +31,11 @@
                 </container>
             </list>
         </container>
-    </main>
+    </layout>
 </layouts>
-<rules>
-    <rule id="isJane">$ =='Jane'</rule>
-</rules>
+<scripts>
+    <script id="isJane"> $ == "Jane" </script>
+</scripts>
 <style>
     input {
         color: red;

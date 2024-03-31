@@ -16,8 +16,8 @@ export function ParseConfigString(input: string): DataBoundConfig | undefined {
                 config.layouts = ImportLayoutConfig(node as XMLElement);
             }
 
-            if (node && (node as any)?.tag == 'rules') {
-                config.rules = ImportRules((node as XMLElement).nodes);
+            if (node && (node as any)?.tag == 'scripts') {
+                config.rules = ImportScripts((node as XMLElement).nodes);
             }
 
             if (node && (node as any)?.tag == 'style') {
@@ -35,7 +35,7 @@ function ImportLayoutConfig(xml: XMLElement) {
     const layouts: DataBoundConfig['layouts'] = {} as any;
     for (const node of xml.nodes) {
         if (node && 'tag' in node) {
-            layouts[node.tag] = ImportLayouts((node as XMLElement).nodes, true)[0];
+            layouts[node.attributes?.id] = ImportLayouts((node as XMLElement).nodes, true)[0];
         }
     }
     return layouts;
@@ -130,6 +130,13 @@ function ImportAttributes(attributes: { [key: string]: string }) {
             case 'postprocessors':
                 split.main[key] = value;
                 break;
+            case 'settings':
+                if (typeof value == 'object' && !Array.isArray(value)) {
+                    Object.assign(split.settings, value)
+                } else {
+                    split.settings[key] = value;
+                }
+                break;
             default:
                 split.settings[key] = value;
                 break;
@@ -137,10 +144,10 @@ function ImportAttributes(attributes: { [key: string]: string }) {
     }
     return split;
 }
-function ImportRules(nodes: XMLNode[]) {
+function ImportScripts(nodes: XMLNode[]) {
     const rules = {};
     for (const node of nodes) {
-        if (node && 'attributes' in node && node?.tag == 'rule' && node.attributes.id) {
+        if (node && 'attributes' in node && node?.tag == 'script' && node.attributes.id) {
             rules[node.attributes.id] = ImportText(node.nodes);
         }
     }
@@ -167,12 +174,13 @@ function UnparseXML(xml?: XMLNode | XMLNode[]) {
             s += node.text;
         } else {
             if (node.tag.toLowerCase() != 'script' && node.tag.toLowerCase() != 'style')
-                s += `<${node.tag}${UnparseAttributes(node.attributes)}>${UnparseXML(node.nodes)}</${node.tag}>`;
+                s += `<${node.tag}${UnparseAttributes(node.tag, node.attributes)}>${UnparseXML(node.nodes)}</${node.tag}>`;
         }
     }
     return s;
 }
-function UnparseAttributes(attributes?: { [key: string]: string }) {
+
+function UnparseAttributes(tag: string, attributes?: { [key: string]: string }) {
     let s = '';
     if (!attributes) {
         return s;
@@ -208,4 +216,3 @@ interface XMLElement {
     nodes: XMLNode[]
 }
 interface XMLText { text: string }
-interface XMLHtml { tag: 'html', value: '' }

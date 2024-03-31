@@ -13,6 +13,7 @@ interface ComponentProps {
     theme: string;
     width: 'fill' | 'auto';
     height: 'fill' | 'auto';
+    readonly: boolean;
     settings: editor.IStandaloneEditorConstructionOptions;
 }
 const props = withDefaults(
@@ -27,6 +28,7 @@ const props = withDefaults(
         theme: 'vs-light',
         width: 'fill',
         height: 'fill',
+        readonly: false,
         settings: {},
     } as any
 ) as unknown as ComponentProps;
@@ -80,6 +82,7 @@ onMounted(() => {
             theme: props.theme,
             scrollBeyondLastLine: false,
             automaticLayout: true,
+            readOnly: props.readonly,
             ...props.settings,
         });
 

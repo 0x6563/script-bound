@@ -14,7 +14,8 @@ function GWLanguage(){
                 node: [
                     { name: "node", symbols: [ "element" ], postprocess: ({data}) => { return data[0]; } },
                     { name: "node", symbols: [ "text" ], postprocess: ({data}) => { return data[0]; } },
-                    { name: "node", symbols: [ "comment" ], postprocess: ({data}) => { return null; } }
+                    { name: "node", symbols: [ "comment" ], postprocess: ({data}) => { return null; } },
+                    { name: "node", symbols: [ "script" ], postprocess: ({data}) => { return data[0]; } }
                 ],
                 text: [
                     { name: "text", symbols: [ { token: "text" } ], postprocess: ({data}) => { return { text: data[0].value }; } }
@@ -33,6 +34,18 @@ function GWLanguage(){
                 ],
                 elementClose: [
                     { name: "elementClose", symbols: [ { literal: "<" }, { literal: "/" }, { token: "word" }, { literal: ">" } ] }
+                ],
+                script: [
+                    { name: "script", symbols: [ "scriptOpen", "_", { literal: ">" }, "_", "text", "_", "scriptClose" ], postprocess: ({data}) => { return { tag: data[0].tag, attributes: data[0].attributes , nodes: [data[4]]}; } },
+                    { name: "script", symbols: [ "scriptOpen", "_", { literal: "/" }, { literal: ">" } ], postprocess: ({data}) => { return { tag: data[0].tag, attributes: data[0].attributes, nodes:[] }; } },
+                    { name: "script", symbols: [ "scriptOpen", "_", { literal: ">" }, "_", "scriptClose" ], postprocess: ({data}) => { return { tag: data[0].tag, attributes: data[0].attributes , nodes: [] }; } }
+                ],
+                scriptOpen: [
+                    { name: "scriptOpen", symbols: [ { literal: "<" }, { literal: "script" }, "__", "attributes" ], postprocess: ({data}) => { return { tag: data[1].value, attributes: data[3] }; } },
+                    { name: "scriptOpen", symbols: [ { literal: "<" }, { literal: "script" } ], postprocess: ({data}) => { return { tag: data[1].value, attributes: [] }; } }
+                ],
+                scriptClose: [
+                    { name: "scriptClose", symbols: [ { literal: "</script>" } ] }
                 ],
                 attributes: [
                     { name: "attributes", symbols: [ "kv" ], postprocess: ({data}) => { return { [data[0].key]: data[0].value }; } },
@@ -102,20 +115,46 @@ function GWLanguage(){
                     name: "root",
                     rules: [
                         { import: ["commentL"] },
-                        { when: "<", tag: ["lbracket"], highlight: "tag", goto: "tag" },
+                        { when: /</, tag: ["lbracket"], highlight: "tag", goto: "tagName" },
                         { when: /[^<]+/, tag: ["text"] }
                     ]
                 },
-                tag: {
-                    name: "tag",
+                tagName: {
+                    name: "tagName",
                     rules: [
-                        { import: ["commentL"] },
+                        { when: /script[a-z_A-Z\d\-:!]+/, tag: ["word"], highlight: "tag", set: "tagAttr" },
+                        { when: /script(?!:[a-z])/, tag: ["word"], highlight: "tag", set: "scriptAttr" },
+                        { when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/, tag: ["word"], highlight: "tag", set: "tagAttr" },
+                        { when: "/", tag: ["slash"] }
+                    ]
+                },
+                tagAttr: {
+                    name: "tagAttr",
+                    rules: [
                         { when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/, tag: ["word"], highlight: "tag" },
                         { when: /\s+/, tag: ["space"] },
                         { when: "=", tag: ["="] },
                         { when: ">", tag: ["rbracket"], pop: 1, highlight: "tag" },
                         { when: "/", tag: ["slash"] },
                         { import: ["json"] }
+                    ]
+                },
+                scriptAttr: {
+                    name: "scriptAttr",
+                    rules: [
+                        { when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/, tag: ["word"], highlight: "tag" },
+                        { when: /\s+/, tag: ["space"] },
+                        { when: "=", tag: ["="] },
+                        { when: ">", tag: ["rbracket"], highlight: "tag", set: "scriptClose" },
+                        { when: "/", tag: ["slash"] },
+                        { import: ["json"] }
+                    ]
+                },
+                scriptClose: {
+                    name: "scriptClose",
+                    unmatched: "text",
+                    rules: [
+                        { when: "</script>", tag: ["close"], pop: 1, highlight: "tag" }
                     ]
                 },
                 commentL: {
@@ -136,7 +175,7 @@ function GWLanguage(){
                     rules: [
                         { when: /\s+/, tag: ["space"] },
                         { when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/, tag: ["number"], highlight: "number" },
-                        { when: /"/, tag: ["dquote"], highlight: "string", goto: "string" },
+                        { when: /"/, tag: ["dquote"], highlight: "string", goto: "string1" },
                         { when: "{", tag: ["{"], goto: "json" },
                         { when: "}", tag: ["}"], pop: 1 },
                         { when: "[", tag: ["["], goto: "json" },
@@ -148,8 +187,8 @@ function GWLanguage(){
                         { when: "null", tag: ["null"], highlight: "keyword" }
                     ]
                 },
-                string: {
-                    name: "string",
+                string1: {
+                    name: "string1",
                     rules: [
                         { when: /\\./, tag: ["escaped"], highlight: "string" },
                         { when: "\"", tag: ["dquote"], pop: 1, highlight: "string" },

@@ -1,5 +1,5 @@
 import { defineCustomElement } from 'vue'
-import CodeComponent from '../components/Code.ce.vue';
+import CodeComponent from '../components/monaco.ce.vue';
 
 const Code = defineCustomElement(CodeComponent);
 
