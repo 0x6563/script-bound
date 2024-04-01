@@ -9,6 +9,6 @@ let item = computed(() => props.items[props.items.length - 1]);
 
 <template>
     <div data-control="list" data-component="single">
-        <Renderer v-if="item" :config="props.config.layout" :context="item.context" :bind="item.bind" />
+        <Renderer v-if="item" :config="props.config.layout" :context="item.context" />
     </div>
 </template>

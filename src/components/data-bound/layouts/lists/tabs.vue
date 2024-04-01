@@ -3,6 +3,7 @@ import { reactive, watch } from 'vue';
 import type { ListComponentProps, ListTabbedConfig } from "../../services/types";
 import Renderer from "../../renderer.vue";
 import { PickOne } from '../../services/layout-flow';
+
 const sides = new Set(['top', 'left', 'right', 'bottom', 'none'])
 
 const props = defineProps<ListComponentProps<ListTabbedConfig>>();
@@ -14,7 +15,7 @@ const state = reactive({
 
 watch(props, () => {
     state.side = PickOne(sides, props.config.settings.side, 'top')
-})
+});
 
 </script>
 
@@ -23,11 +24,11 @@ watch(props, () => {
         <div data-element="labels">
             <div v-for="(item, index) in items" :data-active="index == state.active" @click="state.active = index"
                 data-element="label" v-html="item?.label" />
-        </div>
+                    </div>
 
         <div data-element="viewport">
             <div v-for="(item, index) in items" :data-active="index == state.active" data-element="viewport-child">
-                <Renderer :config=props.config.layout :context=item.context :bind=item.bind />
+                <Renderer :config=props.config.layout :context=item.context />
             </div>
         </div>
     </div>

@@ -78,11 +78,15 @@ export class Context {
         }
     }
 
-    fork({ bind, hide, lock }: Bindable & Lockable & Hideable) {
+    fork(config: Bindable & Lockable & Hideable, override?: Partial<Bindable & Lockable & Hideable>) {
+        const bind = override && typeof override.bind != 'undefined' ? override?.bind : config.bind;
+        const hide = override && typeof override.hide != 'undefined' ? override?.hide : config.hide;
+        const lock = override && typeof override.lock != 'undefined' ? override?.lock : config.lock;
+
         const relative = this.findNearestBoundContext();
-        const config = PathResolver.IsMetaPath(bind) ? { data: this.$data, meta: relative.meta } : { data: this.data };
+        const view = PathResolver.IsMetaPath(bind) ? { data: this.$data, meta: relative.meta } : { data: this.data };
         const context = new Context({
-            ...config,
+            ...view,
             scopes: {
                 ...this.scopes,
                 parent: this,
@@ -132,6 +136,10 @@ export class Context {
         return r;
     }
 }
+function RenderContext(context, config: Bindable & Lockable & Hideable, override: Partial<Bindable & Lockable & Hideable>) {
+    return context.fork(Object.assign({}, config, override));
+}
+
 function ContextProxy(source: Context) {
     const p = Value('object', new Proxy(source, {
         get(target, key) {

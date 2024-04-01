@@ -13,8 +13,8 @@ export interface DataBoundConfig {
 
 export type ControlStructure<T extends ComponentConfig = ComponentConfig> = WorkspaceConfig<T> | ContainerConfig<T> | ListConfig<T> | InputConfig<T> | OutputConfig<T>;
 
-export interface ConstrolStructureComponentProps {
-    config: ContainerConfig;
+export interface ConstrolStructureComponentProps<T = ContainerConfig> {
+    config: T;
     context: Context;
 }
 

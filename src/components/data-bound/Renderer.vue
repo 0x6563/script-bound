@@ -1,17 +1,12 @@
 <script lang="ts" setup>
 import { onUnmounted, reactive, watch } from "vue";
-import type { Context } from "./services/context";
+import { Context } from "./services/context";
 import { GetComponent } from "./services/registry";
 import type { ControlStructure } from "./services/types";
-
-interface ComponentProps {
-  context: Context;
-  bind?: string;
-  config: ControlStructure
-}
+type contexin = { parent: Context, bind?: string } | { context: Context };
+type ComponentProps = { config: ControlStructure } & contexin;
 
 const props = defineProps<ComponentProps>();
-
 const state = reactive({
   component: GetComponent('control', props.config?.type),
   hide: false,
@@ -21,14 +16,7 @@ const state = reactive({
 watch(() => props.config.type, () => {
   state.component = GetComponent('control', props.config?.type)
 })
-
-const { hide, lock, bind } = props.config;
-const context = props.context.fork({
-  bind: props?.bind || bind,
-  hide,
-  lock
-});
-
+const context = (props as any)?.context || (props as any).parent.fork(props.config, props);
 state.hide = context.state.hide;
 const stateChange = () => {
   state.hide = context.state.hide;
@@ -38,7 +26,8 @@ const stateChange = () => {
 context.addEventListener('state', stateChange)
 onUnmounted(() => {
   context.removeEventListener('state', stateChange);
-  context.onDestroy();
+  if (! (props as any).context)
+    context.onDestroy();
 })
 </script>
 

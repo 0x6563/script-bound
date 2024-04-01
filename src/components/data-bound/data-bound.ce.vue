@@ -26,7 +26,7 @@ application.observer.watch(application.data, () => {
 
 <template>
   <div data-bound-application>
-    <Renderer :config=config.layouts.main :context=context />
+    <Renderer :config=config.layouts.main :parent=context />
   </div>
 </template>
 

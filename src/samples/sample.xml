@@ -24,7 +24,7 @@
                 <input type="text" bind="$.personal.zip" label="Zip" />
             </container>
             <list bind="$.contact" type="tabs" side="left">
-                <container>
+                <container hide="isHome">
                     <output type="html" bind="@bind" />
                     <input type="text" bind="$.type" />
                     <input type="text" bind="$.phoneNumber" />
@@ -35,12 +35,29 @@
 </layouts>
 <scripts>
     <script id="isJane"> $ == "Jane" </script>
+    <script id="isHome"> $.type == "home" </script>
 </scripts>
 <style>
     input {
         color: red;
         border: none;
         border-bottom: 2px solid black;
+        font-size: 14px;
+
+    }
+    input + *{
+        position: relative;
+        transition: all 200ms;
+        font-size: 14px;
+        top: 2px;
+        left: 0px;
+        height: 12px;
+        pointer-events:none;
+    }
+    input:not(:focus):placeholder-shown + * {
+        font-size: 14px;
+        top: -24px;
+        left: 6px;
     }
 
     input:focus {

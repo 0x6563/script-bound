@@ -15,6 +15,6 @@ watch(props, () => {
 
 <template>
     <div :data-flow="state.flow" :data-wrap="state.wrap" data-control="list" data-component="multi">
-        <Renderer v-for="item in items" :config="config.layout" :context="item.context" :bind="item.bind" />
+        <Renderer v-for="item in items" :config="config.layout" :context="item.context" />
     </div>
 </template>
