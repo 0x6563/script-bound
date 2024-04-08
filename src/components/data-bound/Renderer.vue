@@ -1,38 +1,26 @@
 <script lang="ts" setup>
-import { onUnmounted, reactive, watch } from "vue";
-import { Context } from "./services/context";
-import { GetComponent } from "./services/registry";
 import type { ControlStructure } from "./services/types";
-type contexin = { parent: Context, bind?: string } | { context: Context };
-type ComponentProps = { config: ControlStructure } & contexin;
+
+import { onUnmounted } from "vue";
+import { Context } from "./services/context";
+import ConditionalRender from './renderers/conditional.vue';
+import ComponentRender from './renderers/component.vue';
+
+type ComponentProps = { config: ControlStructure } & ({ parent: Context, bind?: string } | { context: Context });
 
 const props = defineProps<ComponentProps>();
-const state = reactive({
-  component: GetComponent('control', props.config?.type),
-  hide: false,
-  lock: false
-})
-
-watch(() => props.config.type, () => {
-  state.component = GetComponent('control', props.config?.type)
-})
 const context = (props as any)?.context || (props as any).parent.fork(props.config, props);
-state.hide = context.state.hide;
-const stateChange = () => {
-  state.hide = context.state.hide;
-  state.lock = context.state.lock;
-};
 
-context.addEventListener('state', stateChange)
 onUnmounted(() => {
-  context.removeEventListener('state', stateChange);
-  if (! (props as any).context)
+  if (!(props as any).context)
     context.onDestroy();
 })
 </script>
 
 <template>
-  <div v-if="!state.hide" :id="props.config.id" :class="props.config.class" data-renderer>
-    <component :is="state.component" :config="config" :context="context" />
-  </div>
+  <ConditionalRender :context="context">
+    <div :id="props.config.id" :class="props.config.class" data-renderer>
+      <ComponentRender :config="config" :context="context" />
+    </div>
+  </ConditionalRender>
 </template>

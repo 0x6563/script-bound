@@ -2,12 +2,12 @@
     <layout id="main">
         <container flow="top-bottom">
             <container flow="left-right" bind="$.personal">
-                <output type="html" bind="@bind" />
-                <output type="html" bind="@bind">
+                <output type="html" bind="@path" />
+                <output type="html" bind="@path">
                     <b>Test strings</b> some text
                     <script>Should be Removed</script>
                 </output>
-                <output type="html" bind="@bind" />
+                <output type="html" bind="@path" />
                 <output type="html" bind="$root.html" />
             </container>
             <container flow="left-right" bind="$.personal">
@@ -25,7 +25,7 @@
             </container>
             <list bind="$.contact" type="tabs" side="left">
                 <container hide="isHome">
-                    <output type="html" bind="@bind" />
+                    <output type="html" bind="@path" />
                     <input type="text" bind="$.type" />
                     <input type="text" bind="$.phoneNumber" />
                 </container>

@@ -41,13 +41,13 @@ export interface ListConfig<T = ComponentConfig> extends Bindable, Lockable, Hid
     settings: T;
 }
 
-export interface InputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors, PreProcessors, PostProcessors {
+export interface InputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors, Lifecycles {
     type: 'input';
     component: string;
     settings: T;
 }
 
-export interface OutputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors, PreProcessors {
+export interface OutputConfig<T = ComponentConfig> extends Bindable, Lockable, Hideable, QuerySelectors, Lifecycles {
     type: 'output';
     layout?: string;
     component: string;
@@ -83,17 +83,17 @@ export interface ListTabbedConfig {
 
 export type ComponentConfig = {};
 
-export interface PreProcessors {
-    preprocessors?: string[]
-}
-
-export interface PostProcessors {
-    postprocessors?: string[]
+export interface Lifecycles {
+    lifecycle: {
+        'load'?: string[];
+        'update'?: string[];
+        'trigger'?: string[];
+        'unload'?: string[];
+    }
 }
 
 export interface Bindable {
     bind?: string;
-    rebind?: boolean;
 }
 
 export interface QuerySelectors {

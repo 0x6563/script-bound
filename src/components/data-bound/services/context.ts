@@ -41,7 +41,7 @@ export class Context {
         if (meta) {
             this.meta = meta;
         } else {
-            this.meta.bind = this.bind;
+            this.meta.path = this.bind;
         }
         this.checkState();
         this.addEventListener('data', () => this.checkState());

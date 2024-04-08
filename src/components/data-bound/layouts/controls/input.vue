@@ -18,7 +18,7 @@ function onChange(value: any) {
 }
 
 const state = reactive({
-    component: GetComponent('input', props.config?.component || 'flow'),
+    component: GetComponent('input', props.config?.component || 'text'),
 })
 </script>
 

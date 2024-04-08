@@ -59,7 +59,7 @@ lexer: {{
     json ->
         - when: /\s+/ tag: "space"
         - when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ tag: "number" highlight: "number"
-        - when: /"/ tag: "dquote" highlight:"attribute.value" goto: string1 
+        - when: /"/ tag: "dquote" highlight:"attribute.value" goto: json_string 
         - when: "{" tag: "{"  goto: json
         - when: "}" tag: "}" pop
         - when: "[" tag: "[" highlight:"delimiter" goto: json
@@ -70,85 +70,91 @@ lexer: {{
         - when: "false" tag: "false" highlight: "keyword"
         - when: "null" tag: "null" highlight: "keyword"
 
-    string1 ->
-        - when: /\\./ tag: "escaped" highlight:"attribute.value.escape"
-        - when: "\"" tag: "dquote" highlight:"attribute.value" pop
-        - when: /[^\\"]/ tag: "string" highlight: "attribute.value"
+    json_string ->
+        - when: /\\[\\\/bnrft]/ tag: "escaped" highlight:"constant"
+        - when: /\\"/ tag: "quoteEscape"
+        - when: /\\u[A-Fa-f\d]{4}/ tag: "escaped" highlight:"constant"
+        - when: /\\./ tag:"badEscape"
+        - when: /[^"\\]+/ tag: "string" highlight:"string"
+        - when: "\"" tag: "dquote" highlight:"string" pop
 }}
 
 grammar: {{
     // Uncomment the line below to allow experimental diagram generation
 	// postprocessorOverride: ${ _ =>_ }
 
-    xml -> node : {{ { nodes: $0 ?[$0]:[] } }}
-        | xml _ node : {{ { nodes: $2 ? $0.nodes.concat($2): $0.nodes }  }}
+    XMLPlus -> Node : {{ { nodes: $0 ?[$0]:[] } }}
+        | XMLPlus _ Node : {{ { nodes: $2 ? $0.nodes.concat($2): $0.nodes }  }}
 
-    node : {{ $0 }} -> element
-        | text
-        | comment : {{ null }}
-        | script
+    Node : {{ $0 }} 
+        -> Element
+        | Text
+        | Comment : {{ null }}
+        | Script
 
-    text -> $text : {{ { text: $0.value } }}
+    Text -> $text : {{ { text: $0.value } }}
 
-    comment -> $lcomment $text $rcomment : {{ null }}
+    Comment -> $lcomment $text $rcomment : {{ null }}
 
-    element -> elementOpen _ ">" _ xml _ elementClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: $4.nodes} }}
-        | elementOpen  _ "/" ">" : {{ { tag: $0.tag, attributes: $0.attributes, nodes:[] } }}
-        | elementOpen _ ">"  _ elementClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [] } }}
+    Element -> ElementOpen _ ">" _ XMLPlus _ ElementClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: $4.nodes} }}
+        | ElementOpen  _ "/" ">" : {{ { tag: $0.tag, attributes: $0.attributes, nodes:[] } }}
+        | ElementOpen _ ">"  _ ElementClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [] } }}
 
-    elementOpen -> "<" $word __ attributes : {{ { tag: $1.value, attributes: $3 } }}
+    ElementOpen -> "<" $word __ XMLPlusAttributes : {{ { tag: $1.value, attributes: $3 } }}
         | "<" $word : {{ { tag: $1.value, attributes: [] } }}
     
-    elementClose ->  "<" "/" $word ">" 
+    ElementClose ->  "<" "/" $word ">" 
 
-    script -> scriptOpen _ ">" _ text _ scriptClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [$4]} }}
-        | scriptOpen  _ "/" ">" : {{ { tag: $0.tag, attributes: $0.attributes, nodes:[] } }}
-        | scriptOpen _ ">"  _ scriptClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [] } }}
+    Script -> ScriptOpen _ ">" _ Text _ ScriptClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [$4]} }}
+        | ScriptOpen  _ "/" ">" : {{ { tag: $0.tag, attributes: $0.attributes, nodes:[] } }}
+        | ScriptOpen _ ">"  _ ScriptClose : {{ { tag: $0.tag, attributes: $0.attributes , nodes: [] } }}
 
-    scriptOpen -> "<" "script" __ attributes : {{ { tag: $1.value, attributes: $3 } }}
+    ScriptOpen -> "<" "script" __ XMLPlusAttributes : {{ { tag: $1.value, attributes: $3 } }}
         | "<" "script" : {{ { tag: $1.value, attributes: [] } }}
     
-    scriptClose ->  "</script>" 
+    ScriptClose ->  "</script>" 
 
-    attributes -> kv : {{ { [$0.key]: $0.value } }}
-        | attributes _ kv : {{ { ...$0 ,[$2.key]: $2.value }  }} 
+    XMLPlusAttributes -> XMLPlusAttr : {{ { [$0.key]: $0.value } }}
+        | XMLPlusAttributes _ XMLPlusAttr : {{ { ...$0 ,[$2.key]: $2.value }  }} 
 
-    kv -> $word "=" json : {{ { key: $0.value, value: $2 } }}
+    XMLPlusAttr -> $word "=" Json : {{ { key: $0.value, value: $2 } }}
         | $word : {{ { key:$0.value , value: '' } }}
 
-
-    json : {{ $0 }} ->
-        object 
-        | array
-        | quoted
-        | number 
+    Json : {{ $0 }} ->
+        Object 
+        | Array
+        | String
+        | Number 
         | "true" : {{ true }}
         | "false" : {{ false }}
         | "null" : {{ null }}
 
-    quoted -> $dquote  $dquote : {{ "" }}
-            | $dquote string  $dquote : {{ $1 }}
+    String -> $dquote $dquote : {{ "" }}
+            | $dquote StringInner  $dquote : {{ $1 }}
 
-    string -> $escaped : {{  $0.value }}
+    StringInner -> StringEscape : {{ $0 }}
         | $string : {{  $0.value }}
-        | string $escaped : {{ $0 + $1.value }}
-        | string $string : {{ $0 + $1.value }}
-
-    object -> "{" _ "}" : {{ {} }}
-        | "{" _ json_pair _ "}"  : {{ $2 }}
-
-    array -> "[" _ "]" : {{ [] }}
-        | "[" _ json_list _ "]"  : {{ $2 }} 
-
-    json_list -> json : {{ [ $0 ] }}
-        | json_list _ "," _ json : {{ $0.concat($4) }}
+        | StringInner StringEscape : {{ $0 + $1 }}
+        | StringInner $string : {{ $0 + $1.value }}
     
-    json_pair -> pair : {{ $0 }}
-        | json_pair _ "," _ pair : {{ { ...$0, ...$4 } }}
+    StringEscape -> $escaped : {{  JSON.parse('"' +$0.value + '"') }}
+        | $quoteEscape : {{ $0.value[1] }}
 
-    pair -> quoted:k _ ":" _ json:v : {{ { [$k]: $v } }}
+    Object -> "{" _ "}" : {{ {} }}
+        | "{" _ JsonAttributes _ "}"  : {{ $2 }}
 
-    number -> $number : {{ Number($0.value) }}
+    Array -> "[" _ "]" : {{ [] }}
+        | "[" _ Json_list _ "]"  : {{ $2 }} 
+
+    Json_list -> Json : {{ [ $0 ] }}
+        | Json_list _ "," _ Json : {{ $0.concat($4) }}
+    
+    JsonAttributes -> JsonAttr : {{ $0 }}
+        | JsonAttributes _ "," _ JsonAttr : {{ { ...$0, ...$4 } }}
+
+    JsonAttr -> String:k _ ":" _ Json:v : {{ { [$k]: $v } }}
+
+    Number -> $number : {{ Number($0.value) }}
 
     _ -> $space?
     __ -> $space
