@@ -5,7 +5,6 @@
                 <output type="html" bind="@path" />
                 <output type="html" bind="@path">
                     <b>Test strings</b> some text
-                    <script>Should be Removed</script>
                 </output>
                 <output type="html" bind="@path" />
                 <output type="html" bind="$root.html" />

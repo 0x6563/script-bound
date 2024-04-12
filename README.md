@@ -22,3 +22,4 @@ Directives are cascading that drive component behavior
 | output    | one  | one     | no     | yes        |
 | input     | one  | one     | yes    | yes        |
  
+ Copyright 2024 Eduardo Covarrubias. All rights reserved.

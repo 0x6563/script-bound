@@ -1,5 +1,5 @@
 import { ContainerConfig, ControlStructure, DataBoundConfig, InputConfig, ListConfig, OutputConfig } from "../components/data-bound/services/types";
-import { Parse } from 'grammar-well/build/index';
+import { Parse } from 'grammar-well';
 import grammar from './xml.js';
 
 export function ParseConfigString(input: string): DataBoundConfig | undefined {
@@ -17,7 +17,7 @@ export function ParseConfigString(input: string): DataBoundConfig | undefined {
             }
 
             if (node && (node as any)?.tag == 'scripts') {
-                config.rules = ImportScripts((node as XMLElement).nodes);
+                config.scripts = ImportScripts((node as XMLElement).nodes);
             }
 
             if (node && (node as any)?.tag == 'style') {
@@ -35,7 +35,7 @@ function ImportLayoutConfig(xml: XMLElement) {
     const layouts: DataBoundConfig['layouts'] = {} as any;
     for (const node of xml.nodes) {
         if (node && 'tag' in node) {
-            layouts[node.attributes?.id] = ImportLayouts((node as XMLElement).nodes, true)[0];
+            layouts[node.attributes?.id.value] = ImportLayouts((node as XMLElement).nodes, true)[0];
         }
     }
     return layouts;
@@ -72,7 +72,7 @@ function ImportContainer(node: XMLElement): ContainerConfig {
         ...attributes.config,
         settings: attributes.settings,
         type: node.tag as any,
-        component: node.attributes.type,
+        component: node.attributes.type?.value,
         layouts: ImportLayouts(node.nodes)
     };
     return layout;
@@ -84,7 +84,7 @@ function ImportList(node: XMLElement): ListConfig {
         ...attributes.config,
         settings: attributes.settings,
         type: node.tag as any,
-        component: node.attributes.type,
+        component: node.attributes.type?.value,
         layout: ImportLayouts(node.nodes, true)[0]
     }
     return layout;
@@ -113,10 +113,10 @@ function ImportOutput(node: XMLElement): OutputConfig {
     return output;
 }
 
-function ImportAttributes(dictionary: { [key: string]: string }) {
+function ImportAttributes(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
     const attributes = { config: {}, settings: {}, lifecycle: {} };
     for (const key in dictionary) {
-        const value = dictionary[key];
+        const { type, value } = dictionary[key];
         if (key.indexOf('on:') == 0) {
             attributes.lifecycle[key.slice(3)] = value;
             continue;
@@ -134,6 +134,9 @@ function ImportAttributes(dictionary: { [key: string]: string }) {
             case 'id':
             case 'class':
             case 'bind':
+                if (type == 'json')
+                    attributes.config[key] = value;
+                break;
             case 'lock':
             case 'hide':
                 attributes.config[key] = value;
@@ -152,13 +155,13 @@ function ImportAttributes(dictionary: { [key: string]: string }) {
     return attributes;
 }
 function ImportScripts(nodes: XMLNode[]) {
-    const rules = {};
+    const scripts = {};
     for (const node of nodes) {
         if (node && 'attributes' in node && node?.tag == 'script' && node.attributes.id) {
-            rules[node.attributes.id] = ImportText(node.nodes);
+            scripts[node.attributes.id.value] = node.nodes[0];
         }
     }
-    return rules;
+    return scripts;
 
 }
 
@@ -168,7 +171,7 @@ function ImportText(nodes: XMLNode[]) {
     }
 }
 
-function UnparseXML(xml?: XMLNode | XMLNode[]) {
+function UnparseXML(xml: XMLNode | XMLNode[] = null, disabled = { script: true, style: true }) {
     let s = '';
     if (!xml) {
         return s;
@@ -180,20 +183,20 @@ function UnparseXML(xml?: XMLNode | XMLNode[]) {
         if ('text' in node) {
             s += node.text;
         } else {
-            if (node.tag.toLowerCase() != 'script' && node.tag.toLowerCase() != 'style')
-                s += `<${node.tag}${UnparseAttributes(node.tag, node.attributes)}>${UnparseXML(node.nodes)}</${node.tag}>`;
+            if (!disabled[node.tag.toLowerCase()])
+                s += `<${node.tag}${UnparseAttributes(node.tag, node.attributes)}>${UnparseXML(node.nodes, disabled)}</${node.tag}>`;
         }
     }
     return s;
 }
 
-function UnparseAttributes(tag: string, attributes?: { [key: string]: string }) {
+function UnparseAttributes(tag: string, attributes?: { [key: string]: { key: string; value: string; type: string } }) {
     let s = '';
     if (!attributes) {
         return s;
     }
     for (const key in attributes) {
-        s += ` ${key}=${JSON.stringify(attributes[key])}`;
+        s += ` ${key}=${JSON.stringify(attributes[key].value)}`;
     }
     return s;
 }
@@ -202,7 +205,7 @@ export function ParseSample(sample: string) {
     try {
         const response: any = {};
         const parseStart = performance.now();
-        response.result = Parse(grammar(), sample, { algorithm: 'earley' });
+        response.result = Parse(grammar() as any, sample, { algorithm: 'earley' });
         response.timing = performance.now() - parseStart;
         return response;
 
@@ -219,7 +222,7 @@ type XMLNode = XMLElement | XMLComment | XMLText;
 type XMLComment = null;
 interface XMLElement {
     tag: string;
-    attributes: { [key: string]: string }
+    attributes: { [key: string]: { key: string; value: any; type: string } }
     nodes: XMLNode[]
 }
 interface XMLText { text: string }

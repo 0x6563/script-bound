@@ -5,7 +5,7 @@ export interface DataBoundConfig {
         main: ControlStructure;
         [key: string]: ControlStructure;
     };
-    rules?: {
+    scripts?: {
         [key: string]: string;
     }
     style?: string

@@ -50,12 +50,13 @@ watch(props, () => {
     }
 })
 
-onMounted(() => {
+onMounted(async () => {
     if (container.value) {
         container.value.style.height = '100%';
         container.value.style.width = '100%';
         container.value.style.position = 'relative';
-        // Monaco = await import('monaco-editor');
+
+
         if (!window.MonacoEnvironment) {
             (window as any).MonacoEnvironment = {
                 getWorker(_: any, label: any) {

@@ -8,6 +8,7 @@ import SampleXML from './samples/sample.xml?raw';
 import { ParseConfigString } from './services/config';
 import { DataBoundConfig } from './components/data-bound/services/types';
 import { Subject, debounceTime } from 'rxjs';
+import './services/syntax-highlight';
 
 const $cinterval = new Subject<string>();
 const styletag = ref<HTMLStyleElement>();
@@ -61,7 +62,7 @@ function OnChange() {
         <h1>
           <Toggle :value="state.editor" :options="['XML', 'JSON']" @change="state.editor = $event" />
         </h1>
-        <Code v-if="state.editor == 'XML'" :value=configString language="html" width="fill" height="fill"
+        <Code v-if="state.editor == 'XML'" :value=configString language="xmlplus" width="fill" height="fill"
           @edit="configString = $event" />
         <Code v-if="state.editor == 'JSON'" :value=state.config width="fill" height="fill" :readonly=true />
       </div>
