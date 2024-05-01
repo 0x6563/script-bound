@@ -1,5 +1,5 @@
 import { ContainerConfig, ControlStructure, DataBoundConfig, InputConfig, ListConfig, OutputConfig } from "../components/data-bound/services/types";
-import { Parse } from 'grammar-well';
+import { Parse } from 'grammar-well/parser';
 import grammar from './xml.js';
 
 export function ParseConfigString(input: string): DataBoundConfig | undefined {

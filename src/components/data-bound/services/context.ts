@@ -9,10 +9,12 @@ export class Context {
     private $data: any;
     private children: Set<Context> = new Set();
     private $state = { lock: false, hide: false };
+    private $events = new EventTarget();
+    private dataListener = () => this.$events.dispatchEvent(new CustomEvent('data'));
+
+    application: DataBoundApplication;
     meta: { [key: string]: any } = {};
     scopes: { [key: string]: Context };
-
-    private $events = new EventTarget();
 
     get state() {
         return { ...this.$state }
@@ -29,8 +31,6 @@ export class Context {
         }
     }
 
-    application: DataBoundApplication;
-    private dataListener = () => this.$events.dispatchEvent(new CustomEvent('data'));
     constructor({ data, scopes, bind, lock, hide, application, meta }: ContextConfig) {
         this.bind = bind;
         this.lock = lock;
@@ -54,7 +54,6 @@ export class Context {
 
     addEventListener(type: 'data' | 'state', callback: (detail: any) => void) {
         this.$events.addEventListener(type, ((e: CustomEvent<string[]>) => { callback(e.detail) }) as any);
-
     }
 
     removeEventListener(type: 'data' | 'state', callback: () => void) {
@@ -135,9 +134,6 @@ export class Context {
         r.$ = ValueProxy(this.data);
         return r;
     }
-}
-function RenderContext(context, config: Bindable & Lockable & Hideable, override: Partial<Bindable & Lockable & Hideable>) {
-    return context.fork(Object.assign({}, config, override));
 }
 
 function ContextProxy(source: Context) {

@@ -1,7 +1,7 @@
-import { Compile, FileSystemResolver, LanguageDefinition } from "grammar-well";
+import { BrowserImportResolver, Compile, LanguageDefinition } from "grammar-well";
 
 export async function CompileGrammar(source: string, template: 'esm' = 'esm') {
-    return Compile(source, { exportName: 'grammar', template, resolverInstance: new FileSystemResolver('') });
+    return Compile(source, { exportName: 'grammar', template, resolverInstance: new BrowserImportResolver('') });
 }
 
 export async function CompileAndLoad(source: string): Promise<LanguageDefinition> {

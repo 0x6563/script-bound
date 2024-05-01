@@ -1,4 +1,4 @@
-import { CreateMonarchTokenizer } from "grammar-well";
+import { CreateMonarchTokenizer } from "grammar-well/utility";
 import lexer from "./lexer.json";
 
 if (!window['Monaco']) {

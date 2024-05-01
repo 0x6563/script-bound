@@ -3,15 +3,14 @@
         <container flow="top-bottom">
             <container flow="left-right" bind="$.personal">
                 <output type="html" bind="@path" />
-                <output type="html" bind="@path">
-                    <b>Test strings</b> some text
+                <output type="html">
+                    <b>Bold Text</b> Regular Text
                 </output>
-                <output type="html" bind="@path" />
                 <output type="html" bind="$root.html" />
             </container>
             <container flow="left-right" bind="$.personal">
                 <input type="text" bind="$.firstName" label="First Name" />
-                <input type="text" bind="$.firstName" label="First Name" hide="isJane"/>
+                <input type="text" bind="$.firstName" label="First Name" hide=($ == "Jane")/>
                 <input type="text" bind="$.lastName" label="Last Name" />
             </container>
             <container flow="top-bottom">
@@ -22,7 +21,7 @@
                 <input type="text" bind="$.personal.state" label="State" />
                 <input type="text" bind="$.personal.zip" label="Zip" />
             </container>
-            <list bind="$.contact" type="tabs" side="left">
+            <list type="tabs" side="left" bind="$.contact">
                 <container hide="isHome">
                     <output type="html" bind="@path" />
                     <input type="text" bind="$.type" />
@@ -33,7 +32,6 @@
     </layout>
 </layouts>
 <scripts>
-    <script id="isJane"> $ == "Jane" </script>
     <script id="isHome"> $.type == "home" </script>
 </scripts>
 <style>
