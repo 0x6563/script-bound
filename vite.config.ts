@@ -11,6 +11,7 @@ export default defineConfig({
     })
   ],
   build: {
+    target: 'esnext',
     lib: {
       entry: './src/custom-elements/data-bound.ce.ts',
       name: 'data-bound',
@@ -26,5 +27,13 @@ export default defineConfig({
       //   return `js/${entryName}.js`;
       // },
     }
+  },
+  esbuild: {
+    target: "esnext"
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    },
   }
 })

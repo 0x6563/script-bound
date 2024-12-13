@@ -31,5 +31,5 @@ application.observer.watch(application.data, () => {
 </template>
 
 <style lang="scss">
-@import "./style.scss";
+@use "./style.scss" as *;
 </style>

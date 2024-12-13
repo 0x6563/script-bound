@@ -154,7 +154,7 @@ function ContextProxy(source: Context) {
         ownKeys(target) {
             return Object.keys(target.data);
         },
-        getOwnPropertyDescriptor(target, key) {
+        getOwnPropertyDescriptor(_target, key) {
             return { enumerable: true, configurable: true, value: p[key] };
         }
     }));

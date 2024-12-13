@@ -79,5 +79,5 @@ function OnChange() {
 </template>
 
 <style lang="scss">
-@import "./components/data-bound/style.scss";
+@use "./components/data-bound/style.scss" as *;
 </style>./components/monaco.ce.vue./components/code.ce.vue

@@ -1,5 +1,5 @@
 import { ContainerConfig, ControlStructure, DataBoundConfig, InputConfig, ListConfig, OutputConfig } from "../components/data-bound/services/types";
-import { Parse } from 'grammar-well/parser';
+import { Parse } from 'grammar-well/parse';
 import grammar from './xml.js';
 
 export function ParseConfigString(input: string): DataBoundConfig | undefined {
@@ -9,7 +9,7 @@ export function ParseConfigString(input: string): DataBoundConfig | undefined {
             console.error(parsed.error);
             return;
         }
-        const xml: XML = parsed.result.results[0];
+        const xml: XML = parsed.result;
         const config: DataBoundConfig = {} as any;
         for (const node of xml.nodes) {
             if (node && (node as any)?.tag == 'layouts') {
@@ -151,7 +151,6 @@ function ImportAttributes(dictionary: { [key: string]: { key: string; value: any
                 break;
         }
     }
-    console.log(attributes)
     return attributes;
 }
 function ImportScripts(nodes: XMLNode[]) {
@@ -190,7 +189,7 @@ function UnparseXML(xml: XMLNode | XMLNode[] = null, disabled = { script: true, 
     return s;
 }
 
-function UnparseAttributes(tag: string, attributes?: { [key: string]: { key: string; value: string; type: string } }) {
+function UnparseAttributes(_tag: string, attributes?: { [key: string]: { key: string; value: string; type: string } }) {
     let s = '';
     if (!attributes) {
         return s;
@@ -205,7 +204,7 @@ export function ParseSample(sample: string) {
     try {
         const response: any = {};
         const parseStart = performance.now();
-        response.result = Parse(grammar() as any, sample, { algorithm: 'earley' });
+        response.result = Parse(new grammar() as any, sample, { algorithm: 'earley' }, 'first');
         response.timing = performance.now() - parseStart;
         return response;
 
