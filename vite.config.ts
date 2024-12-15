@@ -15,4 +15,15 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  build: {
+    target: 'esnext',
+  },
+  esbuild: {
+    target: "esnext"
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    },
+  }
 })

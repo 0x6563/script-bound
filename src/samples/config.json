@@ -1,0 +1,156 @@
+{
+    "layouts": {
+        "main": {
+            "type": "container",
+            "layouts": [
+                {
+                    "type": "container",
+                    "flow": "top-bottom",
+                    "layouts": [
+                        {
+                            "type": "container",
+                            "flow": "left-right",
+                            "bind": "$.personal",
+                            "layouts": [
+                                {
+                                    "type": "output",
+                                    "bind": "@bind",
+                                    "component": "html",
+                                    "settings": {}
+                                },
+                                {
+                                    "type": "output",
+                                    "bind": "$root.html",
+                                    "component": "html",
+                                    "settings": {}
+                                }
+                            ]
+                        },
+                        {
+                            "type": "container",
+                            "flow": "left-right",
+                            "bind": "$.personal",
+                            "layouts": [
+                                {
+                                    "type": "input",
+                                    "bind": "$.firstName",
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "First Name"
+                                    }
+                                },
+                                {
+                                    "type": "input",
+                                    "hide": "isJane",
+                                    "bind": "$.firstName",
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "First Name"
+                                    }
+                                },
+                                {
+                                    "type": "input",
+                                    "bind": "$.lastName",
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "Last Name"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "container",
+                            "flow": "top-bottom",
+                            "layouts": [
+                                {
+                                    "type": "input",
+                                    "bind": "$.personal.address",
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "Address"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "container",
+                            "flow": "left-right",
+                            "layouts": [
+                                {
+                                    "type": "input",
+                                    "bind": "$.personal.city",
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "City"
+                                    }
+                                },
+                                {
+                                    "type": "input",
+                                    "bind": "$.personal.state",
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "State"
+                                    }
+                                },
+                                {
+                                    "type": "input",
+                                    "bind": "$.personal.zip",
+                                    "component": "text",
+                                    "settings": {
+                                        "label": "Zip"
+                                    }
+                                }
+                            ]
+                        },
+                        {
+                            "type": "output",
+                            "bind": "@bind",
+                            "component": "html",
+                            "settings": {}
+                        },
+                        {
+                            "type": "list",
+                            "bind": "$.contact",
+                            "component": "tabs",
+                            "settings": {
+                                "side": "left"
+                            },
+                            "layout": {
+                                "type": "container",
+                                "layouts": [
+                                    {
+                                        "type": "input",
+                                        "bind": "@bind",
+                                        "component": "text",
+                                        "settings": {
+                                            "label": "Index"
+                                        }
+                                    },
+                                    {
+                                        "type": "input",
+                                        "bind": "$.type",
+                                        "component": "text",
+                                        "settings": {
+                                            "label": "Type"
+                                        }
+                                    },
+                                    {
+                                        "type": "input",
+                                        "bind": "$.phoneNumber",
+                                        "component": "text",
+                                        "settings": {
+                                            "label": "Phone"
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "rules": {
+        "isJane": "$ =='Jane'"
+    }
+}
