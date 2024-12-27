@@ -26,7 +26,7 @@
             <output type="html">
                 Phone numbers but filtered for mobile only
             </output>
-            <list type="tabs" side="left" bind="$.contact">
+            <list type="tabs" settings={"side":"top"} bind="$.contact">
                 <container hide="isHome">
                     <output type="html" bind="@path" />
                     <input type="text" bind="$.type" />
