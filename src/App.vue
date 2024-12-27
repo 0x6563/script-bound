@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import type { DataBoundConfig } from './components/data-bound/services/types';
 import { watch, ref, reactive } from 'vue';
 import DataBound from './components/data-bound/data-bound.ce.vue';
 import Code from './components/monaco.ce.vue';
@@ -6,7 +7,6 @@ import Toggle from './components/toggle.vue';
 import SampleData from './samples/data.json';
 import SampleXML from './samples/sample.xml?raw';
 import { ParseConfigString } from './services/config';
-import type { DataBoundConfig } from './components/data-bound/services/types';
 import { Subject, debounceTime } from 'rxjs';
 import './services/syntax-highlight';
 

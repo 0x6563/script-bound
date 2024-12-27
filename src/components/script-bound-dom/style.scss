@@ -1,0 +1,143 @@
+[data-bound-application] {
+    [data-layout] {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    [data-flow] {
+        display: flex;
+        margin: 0;
+        padding: 0;
+
+        &>* {
+            flex: 1 1 auto;
+        }
+    }
+
+    [data-flow='left-right'] {
+        flex-direction: row;
+    }
+
+    [data-flow='right-left'] {
+        flex-direction: row-reverse;
+    }
+
+    [data-flow='top-bottom'] {
+        flex-direction: column;
+    }
+
+    [data-flow='bottom-top'] {
+        flex-direction: column-reverse;
+    }
+
+    [data-wrap='true'] {
+        flex-wrap: wrap;
+    }
+
+    [data-wrap='false'] {
+        flex-wrap: nowrap;
+    }
+
+    input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    [data-component="tabs"] {
+        display: flex;
+
+
+        &[data-tab-side="none"] {
+            [data-element="label"] {
+                display: none;
+            }
+        }
+
+        &[data-tab-side="left"],
+        &[data-tab-side="right"] {
+            flex-flow: row;
+            align-items: start;
+
+            [data-element="labels"] {
+                display: flex;
+                flex-flow: column;
+            }
+        }
+
+        &[data-tab-side="left"] {
+            [data-element="label"] {
+                border-right: solid 2px rgba(0, 0, 0, 0);
+
+                &[data-active="true"] {
+                    border-right: solid 2px black;
+                }
+            }
+        }
+
+        &[data-tab-side="right"] {
+            flex-flow: row-reverse;
+
+            [data-element="label"] {
+                border-left: solid 2px rgba(0, 0, 0, 0);
+
+                &[data-active="true"] {
+                    border-left: solid 2px black;
+                }
+            }
+        }
+
+        &[data-tab-side="top"] {
+            flex-flow: column;
+
+            [data-element="label"] {
+                border-bottom: solid 2px rgba(0, 0, 0, 0);
+
+                &[data-active="true"] {
+                    border-bottom: solid 2px black;
+                }
+            }
+        }
+
+        &[data-tab-side="bottom"] {
+            flex-flow: column-reverse;
+
+            [data-element="label"] {
+                border-top: solid 2px rgba(0, 0, 0, 0);
+
+                &[data-active="true"] {
+                    border-top: solid 2px black;
+                }
+            }
+        }
+
+
+        [data-element="labels"] {
+            flex: 0 1 auto;
+
+            [data-element="label"] {
+                cursor: pointer;
+                display: inline-block;
+                padding: 4px 8px;
+            }
+        }
+
+        [data-element="viewport"] {
+            flex: 1 1 auto;
+
+            [data-element="viewport-child"] {
+                display: none;
+
+                &[data-active="true"] {
+                    display: block;
+                }
+            }
+        }
+    }
+
+    [data-bound-label] {
+        font-size: .7em;
+    }
+}

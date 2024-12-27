@@ -4,7 +4,7 @@
             <container flow="left-right" bind="$.personal">
                 <output type="html" bind="@path" />
                 <output type="html">
-                    <b>Bold Text</b> Regular Text
+                    Template Defined <b style="color:red;">HTML</b>
                 </output>
                 <output type="html" bind="$root.html" />
             </container>
@@ -13,14 +13,19 @@
                 <input type="text" bind="$.firstName" label="First Name" hide=($ == "Jane")/>
                 <input type="text" bind="$.lastName" label="Last Name" />
             </container>
-            <container flow="top-bottom">
-                <input type="text" bind="$.personal.address" label="Address" />
-            </container>
-            <container flow="left-right">
-                <input type="text" bind="$.personal.city" label="City" />
-                <input type="text" bind="$.personal.state" label="State" />
-                <input type="text" bind="$.personal.zip" label="Zip" />
-            </container>
+            <output type="html">
+                Phone numbers 
+            </output>
+            <list type="tabs" side="left" bind="$.contact">
+                <container>
+                    <output type="html" bind="@path" />
+                    <input type="text" bind="$.type" />
+                    <input type="text" bind="$.phoneNumber" />
+                </container>
+            </list>
+            <output type="html">
+                Phone numbers but filtered for mobile only
+            </output>
             <list type="tabs" side="left" bind="$.contact">
                 <container hide="isHome">
                     <output type="html" bind="@path" />
