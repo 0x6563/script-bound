@@ -1,5 +1,5 @@
 import { defineCustomElement } from 'vue'
-import ScriptBoundComponent from '../components/script-bound-v2/script-bound.ce.vue'
+import ScriptBoundComponent from '../components/script-bound-dom/script-bound.ce.vue'
 
 const ScriptBound = defineCustomElement(ScriptBoundComponent);
 
