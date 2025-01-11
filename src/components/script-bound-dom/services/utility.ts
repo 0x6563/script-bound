@@ -1,8 +1,8 @@
-export function GetLayoutFlow(source: { flow?: string; wrap?: boolean }): { flow: string, wrap: boolean } {
+export function GetLayoutFlow(source: { direction?: string; wrap?: boolean }): { direction: string, wrap: boolean } {
     const flows = new Set(["left-right", "right-left", "top-bottom", "bottom-top"]);
     const wraps = new Set([true, false]);
     return {
-        flow: PickOne(flows, source?.flow?.toLowerCase(), 'top-bottom'),
+        direction: PickOne(flows, source?.direction?.toLowerCase(), 'top-bottom'),
         wrap: PickOne(wraps, source?.wrap, false),
     }
 }

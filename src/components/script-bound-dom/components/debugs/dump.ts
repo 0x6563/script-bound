@@ -1,11 +1,12 @@
-import type { OutputConfig } from "../../services/types.ts";
-import type { DataBoundApplication } from "../../services/application.ts";
-import type { Context } from "../../services/context.ts";
+import { OutputComponent } from "../../services/types/output.ts";
+import type { DOMNodeLike } from "../../services/elements.ts";
 
-export function Debug_Dump(application: DataBoundApplication, config: OutputConfig, context: Context) {
-    const container = application.createNode('div');
-    const pre = application.createNode('pre');
-    pre.innerHTML = JSON.stringify(config, null, 2);
-    container.appendChild(pre);
-    return container;
+export class DebugDump extends OutputComponent {
+    connect(): DOMNodeLike[] {
+        const container = this.component.application.createNode('div');
+        const pre = this.component.application.createNode('pre');
+        pre.innerHTML = JSON.stringify(this.component.config, null, 2);
+        container.appendChild(pre);
+        return [container];
+    }
 }

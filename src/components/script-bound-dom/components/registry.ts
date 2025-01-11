@@ -1,24 +1,17 @@
-import { Text } from './inputs/text.ts';
+import { Textbox } from './inputs/textbox.ts';
 import { Checkbox } from './inputs/checkbox.ts';
 import { Multi } from './lists/multi.ts';
 import { Single } from './lists/single.ts';
 import { Tabs } from './lists/tabs.ts';
 import { Html } from './outputs/html.ts';
 import { Flow } from "./containers/flow.ts";
-import { Debug_Dump } from "./debugs/dump.ts";
-import { Debug_Error } from "./debugs/error.ts";
-import type { DOMNodeLike } from '../services/element.ts';
-import type { ComponentRegistry } from '../services/types.ts';
+import { DebugDump } from "./debugs/dump.ts";
+import { DebugError } from "./debugs/error.ts";
 
-export const Registry: {
-    input: ComponentRegistry,
-    output: ComponentRegistry,
-    list: ComponentRegistry,
-    debug: ComponentRegistry,
-    container: ComponentRegistry,
-} = {
+export const ComponentsByType = {
     input: {
-        text: Text,
+        text: Textbox,
+        textbox: Textbox,
         checkbox: Checkbox
     },
     list: {
@@ -33,12 +26,23 @@ export const Registry: {
         flow: Flow
     },
     debug: {
-        dump: Debug_Dump,
-        error: Debug_Error
+        dump: DebugDump,
+        error: DebugError
     },
+}
+export const ComponentsByName = {
+    textbox: Textbox,
+    checkbox: Checkbox,
+    multi: Multi,
+    single: Single,
+    tabs: Tabs,
+    html: Html,
+    flow: Flow,
+    dump: DebugDump,
+    error: DebugError
 }
 
 
-export function GetComponent(control: keyof typeof Registry, name: string): (...args: any[]) => DOMNodeLike {
-    return Registry[control]?.[name] || Registry.debug.error;
+export function GetComponent(group: "container" | "list" | "input" | "output", name: string): typeof ComponentsByName[keyof typeof ComponentsByName] {
+    return ComponentsByType[group]?.[name] || ComponentsByName[name] || ComponentsByName.error;
 }

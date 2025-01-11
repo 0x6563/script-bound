@@ -1,8 +1,26 @@
-import type { OutputConfig } from "../../services/types.ts";
-import type { DataBoundApplication } from "../../services/application.ts";
-import type { Context } from "../../services/context.ts";
+import { OutputComponent } from "../../services/types/output.ts";
+import type { DOMNodeLike } from "../../services/elements.ts";
+import type { ApplicationController } from "../../services/controllers/application.ts";
 
-export function Debug_Error(application: DataBoundApplication, config: OutputConfig, context: Context) {
+export class DebugError extends OutputComponent {
+    connect(): DOMNodeLike[] {
+        const container = this.component.application.createNode('div');
+        container.setAttribute('style', 'color:red');
+
+        const h1 = this.component.application.createNode('h1');
+        container.appendChild(h1);
+        h1.innerHTML = 'Error';
+
+        const pre = this.component.application.createNode('pre');
+        pre.innerHTML = JSON.stringify(this.component.config, null, 2);
+
+        container.appendChild(pre);
+        return [container];
+    }
+}
+
+
+export function ErrorBox(application: ApplicationController, message: string) {
     const container = application.createNode('div');
     container.setAttribute('style', 'color:red');
 
@@ -11,8 +29,8 @@ export function Debug_Error(application: DataBoundApplication, config: OutputCon
     h1.innerHTML = 'Error';
 
     const pre = application.createNode('pre');
-    pre.innerHTML = JSON.stringify(config, null, 2);
+    pre.innerHTML = message;
 
     container.appendChild(pre);
-    return container;
+    return [container];
 }

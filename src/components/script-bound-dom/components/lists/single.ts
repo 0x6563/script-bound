@@ -1,13 +1,27 @@
-import type { ComponentContext, ListConfig, ListMultiConfig } from "../../services/types.ts";
-import type { DataBoundApplication } from "../../services/application.ts";
-import { Render } from "../../render.ts";
+import type { ComponentController } from "../../services/controllers/component.ts";
+import { ListComponent } from "../../services/types/list.ts";
 
-export function Single(application: DataBoundApplication, config: ListConfig<ListMultiConfig>, contexts: ComponentContext) {
-    const container = application.createNode('div');
-    container.setAttribute('data-control', "list");
-    container.setAttribute('data-component', "single");
-    const context = contexts[contexts.length - 1]
-    if (context)
-        container.appendChild(Render(application, config.layout, context.context));
-    return container;
+export class Single extends ListComponent {
+    private attributes;
+
+    constructor(protected component: ComponentController) {
+        super(component);
+        this.attributes = {
+            'data-control': "list",
+            'data-component': "single",
+        }
+    }
+
+    connect(subcomponents: ComponentController[]) {
+        const container = this.component.application.createNode('div', this.attributes);
+        const component = subcomponents[subcomponents.length - 1]
+        if (component) {
+            const doms = component.connect();
+            for (const dom of doms) {
+                container.appendChild(dom);
+            }
+        }
+        return [container];
+    }
+
 }

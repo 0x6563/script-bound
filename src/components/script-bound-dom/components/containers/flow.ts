@@ -1,18 +1,30 @@
-import type { ContainerFlowConfig, ContainerConfig } from "../../services/types.ts";
-import type { DataBoundApplication } from "../../services/application.ts";
-import type { Context } from "../../services/context.ts";
-import { Render } from "../../render.ts";
 import { GetLayoutFlow } from "../../services/utility.ts";
+import type { ComponentController } from "../../services/controllers/component.ts";
+import { ContainerComponent } from "../../services/types/container.ts";
 
-export function Flow(application: DataBoundApplication, config: ContainerConfig<ContainerFlowConfig>, context: Context) {
-    const state = GetLayoutFlow(config.settings);
-    const container = application.createNode('div');
-    container.setAttribute('data-flow', state.flow?.toString());
-    container.setAttribute('data-wrap', state.wrap.toString());
-    container.setAttribute('data-control', "container");
-    container.setAttribute('data-component', "flow");
-    for (const layout of config.layouts) {
-        container.appendChild(Render(application, layout, context))
+export class Flow extends ContainerComponent {
+    private attributes;
+
+    constructor(protected component: ComponentController) {
+        super(component);
+        const { direction, wrap } = GetLayoutFlow(this.component.config.settings);
+        this.attributes = {
+            'data-flow': direction?.toString(),
+            'data-wrap': wrap.toString(),
+            'data-control': "container",
+            'data-component': "flow",
+        }
     }
-    return container;
+
+    connect(subcomponents: ComponentController[]) {
+        const container = this.component.application.createNode('div', this.attributes);
+        for (const component of subcomponents) {
+            const doms = component.connect();
+            for (const dom of doms) {
+                container.appendChild(dom);
+            }
+        }
+        return [container];
+    }
+
 }

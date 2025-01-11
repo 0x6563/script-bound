@@ -1,11 +1,12 @@
-import type { ScriptBoundConfig } from "./types";
-import { ObjectMutationObserver } from "object-mutation-observer";
+import type { ScriptBoundConfig } from "../types/types";
+import { ObjectMutationObserver, type ChangeCallback } from "object-mutation-observer";
 import { Run } from "moderate-code-interpreter";
-import { CreateElementNode, type DOMNodeLike } from "./element";
+import { CreateElementNode, type DOMNodeLike } from "../elements";
 
-export class DataBoundApplication {
+export class ApplicationController {
     observer: ObjectMutationObserver;
-    data;
+    data: any;
+    private listeners: WeakMap<any, { main: ChangeCallback, listeners: Set<ChangeCallback> }> = new WeakMap();
     rules: { [key: string]: any } = {};
     constructor(
         public config: ScriptBoundConfig,
@@ -46,7 +47,7 @@ export class DataBoundApplication {
         }
     }
 
-    createNode(type: string, attributes: { [key: string]: string | undefined | null } = {}, events: { [key: string]: () => void } = {}): DOMNodeLike {
+    createNode(type: string, attributes: { [key: string]: string | undefined | null } = {}, events: { [key: string]: (e: any) => void } = {}): DOMNodeLike {
         const node = CreateElementNode(type);
         for (const key in attributes) {
             node.setAttribute(key, attributes[key] || '');
@@ -57,14 +58,33 @@ export class DataBoundApplication {
         return node;
     }
 
+
+    watch(data: any, callback: ChangeCallback) {
+        if (!this.listeners.has(data)) {
+            const callbacker: { main: ChangeCallback, listeners: Set<ChangeCallback> } = { main: undefined as any, listeners: new Set<ChangeCallback>() };
+            callbacker.main = (e) => callbacker.listeners.forEach(c => c(e));
+            this.listeners.set(data, callbacker);
+            this.observer.watch(data, callbacker.main);
+        }
+        this.listeners.get(data)?.listeners.add(callback);
+    }
+    unwatch(data: any, callback: ChangeCallback) {
+        const callbacker = this.listeners.get(data);
+        callbacker?.listeners.delete(callback);
+        if (callbacker?.listeners.size == 0) {
+            this.listeners.delete(data);
+            this.observer.unwatch(data, callbacker.main);
+        }
+
+    }
 }
 
 function RunTree(tree, scopes) {
     try {
         const parseStart = performance.now();
         const result = (Run(tree, { ...scopes }) as any)?.value
-        console.log(result)
-        console.log(performance.now() - parseStart)
+        // console.log(result)
+        // console.log(performance.now() - parseStart)
         return result;
     } catch (error) {
         console.log('------------')

@@ -9,11 +9,11 @@ const props = withDefaults(defineProps<{
 })
 
 const state = reactive({
-    content: props.config.layout || props.value
+    content: props.config.content || props.value
 })
 
 watch(props, () => {
-    state.content = props.config.layout || props.value
+    state.content = props.config.content || props.value
 })
 
 </script>

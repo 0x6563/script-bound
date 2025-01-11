@@ -1,10 +1,11 @@
 export function CreateElementNode(type: string): DOMNodeLike {
-    return document.createElement(type) as DOMNodeLike;
+    return document.createElement(type) as unknown as DOMNodeLike;
 }
 
 export class VirtualElement implements DOMNodeLike {
     innerHTML: string = '';
     constructor(private type: string) { }
+
     setAttribute(key: string, value: string): void {
         throw new Error("Method not implemented.");
     }
@@ -31,11 +32,13 @@ export class VirtualElement implements DOMNodeLike {
 
 export interface DOMNodeLike {
     innerHTML: string;
+    parentNode: null | DOMNodeLike;
     setAttribute(key: string, value: string): void;
     addEventListener(type: string, callback: any): void;
     removeEventListener(type: string, callback: any): void;
     removeAttribute(key: string): void;
     appendChild(element: DOMNodeLike): void;
     removeChild(element: DOMNodeLike): void;
+    insertBefore(element: DOMNodeLike, reference: DOMNodeLike);
     toString(): string;
 }

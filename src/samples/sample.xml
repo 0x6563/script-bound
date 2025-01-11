@@ -1,34 +1,32 @@
 <layouts>
     <layout id="main">
         <container flow="top-bottom">
-            <container flow="left-right" bind="$.personal">
-                <output type="html" bind="@path" />
-                <output type="html">
-                    Template Defined <b style="color:red;">HTML</b>
-                </output>
-                <output type="html" bind="$root.html" />
+            <container settings={"flow":"left-right"} bind="$.personal">
+                <html bind="@path" />
+                <html>Template Defined <b style="color:red;">HTML</b></html>
+                <html bind="$root.html" />
             </container>
-            <container flow="left-right" bind="$.personal">
+            <container settings={"flow":"left-right"} bind="$.personal">
                 <input type="text" bind="$.firstName" label="First Name" />
-                <input type="text" bind="$.firstName" label="First Name" hide=($ == "Jane")/>
+                <input if=($ == "Jane") type="text" bind="$.firstName" label="First Name" />
                 <input type="text" bind="$.lastName" label="Last Name" />
             </container>
-            <output type="html">
+            <html>
                 Phone numbers 
-            </output>
+            </html>
             <list type="tabs" side="left" bind="$.contact">
                 <container>
-                    <output type="html" bind="@path" />
+                    <html bind="@path" />
                     <input type="text" bind="$.type" />
                     <input type="text" bind="$.phoneNumber" />
                 </container>
             </list>
-            <output type="html">
+            <html>
                 Phone numbers but filtered for mobile only
-            </output>
+            </html>
             <list type="tabs" settings={"side":"top"} bind="$.contact">
-                <container hide="isHome">
-                    <output type="html" bind="@path" />
+                <container if="isHome">
+                    <html bind="@path" />
                     <input type="text" bind="$.type" />
                     <input type="text" bind="$.phoneNumber" />
                 </container>
@@ -37,7 +35,7 @@
     </layout>
 </layouts>
 <scripts>
-    <script id="isHome"> $.type == "home" </script>
+    <script id="isHome"> $.type == "mobile" </script>
 </scripts>
 <style>
     input {
@@ -67,7 +65,7 @@
         border-bottom: 2px solid blue;
     }
 
-    [data-renderer] {
+    [data-control] {
         border: solid 1px #bbb;
         padding: 8px !important;
     }

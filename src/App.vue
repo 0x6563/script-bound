@@ -1,19 +1,19 @@
 <script lang="ts" setup>
-import type { DataBoundConfig } from './components/data-bound/services/types';
+import type { ScriptBoundConfig } from './components/script-bound-dom/services/types/types';
 import { watch, ref, reactive } from 'vue';
-import DataBound from './components/data-bound/data-bound.ce.vue';
+import ScriptBound from './components/script-bound-dom/script-bound.ce.vue';
 import Code from './components/monaco.ce.vue';
 import Toggle from './components/toggle.vue';
 import SampleData from './samples/data.json';
 import SampleXML from './samples/sample.xml?raw';
-import { ParseConfigString } from './services/config';
 import { Subject, debounceTime } from 'rxjs';
+import { ParseConfigString } from './components/script-bound-dom/services/config';
 import './services/syntax-highlight';
 
 const $cinterval = new Subject<string>();
 const styletag = ref<HTMLStyleElement>();
 const state = reactive<{
-  config?: DataBoundConfig,
+  config?: ScriptBoundConfig,
   data: any,
   render: string,
   editor: string;
@@ -72,12 +72,13 @@ function OnChange() {
       <h1>
         <Toggle :value="state.render" :options="['Form', 'JSON']" @change="state.render = $event" />
       </h1>
-      <DataBound v-if="state.render == 'Form' && state.config" :data=state.data :config=state.config @change=OnChange />
+      <ScriptBound v-if="state.render == 'Form' && state.config" :data=state.data :config=state.config
+        @change=OnChange />
       <Code v-if="state.render == 'JSON'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />
     </div>
   </div>
 </template>
 
 <style lang="scss">
-@use "./components/data-bound/style.scss" as *;
+@use "./components/script-bound-dom/style.scss" as *;
 </style>./components/monaco.ce.vue./components/code.ce.vue

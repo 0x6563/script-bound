@@ -51,8 +51,8 @@ function RunTree(tree, scopes) {
     try {
         const parseStart = performance.now();
         const result = (Run(tree, { ...scopes }) as any)?.value
-        console.log(result)
-        console.log(performance.now() - parseStart)
+        // console.log(result)
+        // console.log(performance.now() - parseStart)
         return result;
     } catch (error) {
         console.log('------------')

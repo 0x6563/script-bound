@@ -1,10 +1,11 @@
 <script lang="ts" setup>
-import type { ScriptBoundConfig  } from './services/types.ts';
-import { Render } from './render.ts';
-import { Context } from './services/context.ts';
-import { DataBoundApplication } from './services/application.ts';
+import type { ScriptBoundConfig } from './services/types/types.ts';
+import { DataController } from './services/controllers/data.ts';
+import { ApplicationController } from './services/controllers/application.ts';
 import { onMounted, ref } from 'vue';
 import { config } from 'rxjs';
+import { ComponentController } from './services/controllers/component.ts';
+import { AttributeController } from './services/controllers/attribute.ts';
 
 interface ComponentProps {
   data: any;
@@ -13,12 +14,16 @@ interface ComponentProps {
 
 const props = defineProps<ComponentProps>();
 const container = ref<HTMLElement | null>(null);
-let application = new DataBoundApplication(props.config, props.data);
-let context = new Context({ data: application.data, application });
+const application = new ApplicationController(props.config, props.data);
+const data = new DataController({ application, data: application.data });
 
 onMounted(() => {
-  console.log(application,config);
-  container.value?.appendChild(Render(application, props.config.layouts.main as any, context) as HTMLElement)
+  const lock = new AttributeController({ application, data, condition: false, attribute: 'lock', lockingCondition: true });
+  const component = new ComponentController({ application, data, config: props.config.layouts.main, attributes: { lock } });
+  const doms = component.connect();
+  for (const dom of doms) {
+    container.value?.appendChild(dom as HTMLElement)
+  }
 
 });
 </script>

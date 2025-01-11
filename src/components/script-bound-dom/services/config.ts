@@ -1,8 +1,9 @@
-import type { ContainerConfig, ControlStructure, DataBoundConfig, InputConfig, ListConfig, OutputConfig } from "../components/data-bound/services/types";
+import type { ContainerConfig, ComponentDefinition, ScriptBoundConfig, InputConfig, ListConfig, OutputConfig } from "./types/types.js";
 import { Parse } from 'grammar-well/parse';
 import grammar from './xml.js';
+import { ComponentsByName } from "../components/registry.js";
 
-export function ParseConfigString(input: string): DataBoundConfig | undefined {
+export function ParseConfigString(input: string): ScriptBoundConfig | undefined {
     try {
         const parsed = ParseSample(input);
         if (parsed.error) {
@@ -10,7 +11,7 @@ export function ParseConfigString(input: string): DataBoundConfig | undefined {
             return;
         }
         const xml: XML = parsed.result;
-        const config: DataBoundConfig = {} as any;
+        const config: ScriptBoundConfig = {} as any;
         for (const node of xml.nodes) {
             if (node && (node as any)?.tag == 'layouts') {
                 config.layouts = ImportLayoutConfig(node as XMLElement);
@@ -32,7 +33,7 @@ export function ParseConfigString(input: string): DataBoundConfig | undefined {
 }
 
 function ImportLayoutConfig(xml: XMLElement) {
-    const layouts: DataBoundConfig['layouts'] = {} as any;
+    const layouts: ScriptBoundConfig['layouts'] = {} as any;
     for (const node of xml.nodes) {
         if (node && 'tag' in node) {
             layouts[node.attributes?.id.value] = ImportLayouts((node as XMLElement).nodes, true)[0];
@@ -41,8 +42,8 @@ function ImportLayoutConfig(xml: XMLElement) {
     return layouts;
 }
 
-function ImportLayouts(nodes: XMLNode[], first?: true): ControlStructure[] {
-    const elements: ControlStructure[] = [];
+function ImportLayouts(nodes: XMLNode[], first?: true): ComponentDefinition[] {
+    const elements: ComponentDefinition[] = [];
     for (const node of nodes) {
         if (node && 'attributes' in node) {
             elements.push(ImportLayout(node));
@@ -54,92 +55,73 @@ function ImportLayouts(nodes: XMLNode[], first?: true): ControlStructure[] {
     return elements;
 }
 
+const ImportRegistry = {
+    container(node: XMLElement, component: string = 'flow'): ContainerConfig {
+        const attributes = ImportAttributes(node.attributes);
+        const layout: ContainerConfig = {
+            ...attributes,
+            type: 'container',
+            component: node.attributes.type?.value || component,
+            content: ImportLayouts(node.nodes)
+        };
+        return layout;
+    },
+    list(node: XMLElement, component: string = 'multi'): ListConfig {
+        const attributes = ImportAttributes(node.attributes);
+        const layout: ListConfig = {
+            ...attributes,
+            type: 'list',
+            component: node.attributes.type?.value || component,
+            template: ImportLayouts(node.nodes, true)[0]
+        }
+        return layout;
+    },
+    input(node: XMLElement, component: string = 'textbox'): InputConfig {
+        const attributes = ImportAttributes(node.attributes);
+        const input: InputConfig = {
+            ...attributes,
+            type: 'input',
+            component: node.attributes.type?.value || component,
+        };
+        return input;
+    },
+    output(node: XMLElement, component: string = 'html'): OutputConfig {
+        const attributes = ImportAttributes(node.attributes);
+        const output: OutputConfig = {
+            ...attributes,
+            type: 'output',
+            component: node.attributes.type?.value || component,
+            content: UnparseXML(node.nodes).trim(),
+        };
+        return output;
+    }
+}
+
 function ImportLayout(node: XMLElement) {
-    if (node.tag == 'container') {
-        return ImportContainer(node);
-    } else if (node.tag == 'list') {
-        return ImportList(node);
-    } else if (node.tag == 'input') {
-        return ImportInput(node);
-    } else if (node.tag == 'output') {
-        return ImportOutput(node);
-    }
-    throw 'Not a component';
-}
-function ImportContainer(node: XMLElement): ContainerConfig {
-    const attributes = ImportAttributes(node.attributes);
-    const layout: ContainerConfig = {
-        ...attributes.config,
-        settings: attributes.settings,
-        type: node.tag as any,
-        component: node.attributes.type?.value,
-        layouts: ImportLayouts(node.nodes)
+    if (node.tag in ImportRegistry) {
+        return ImportRegistry[node.tag](node)
+    } else if (ComponentsByName[node.tag].type in ImportRegistry) {
+        return ImportRegistry[ComponentsByName[node.tag].type](node, node.tag);
     };
-    return layout;
-}
-
-function ImportList(node: XMLElement): ListConfig {
-    const attributes = ImportAttributes(node.attributes);
-    const layout: ListConfig = {
-        ...attributes.config,
-        settings: attributes.settings,
-        type: node.tag as any,
-        component: node.attributes.type?.value,
-        layout: ImportLayouts(node.nodes, true)[0]
-    }
-    return layout;
-}
-
-function ImportInput(node: XMLElement): InputConfig {
-    const attributes = ImportAttributes(node.attributes);
-    const input: InputConfig = {
-        ...attributes.config,
-        lifecycle: attributes.lifecycle,
-        settings: attributes.settings,
-        type: node.tag as any,
-    } as InputConfig;
-    return input;
-}
-
-function ImportOutput(node: XMLElement): OutputConfig {
-    const attributes = ImportAttributes(node.attributes);
-    const output: OutputConfig = {
-        ...attributes.config,
-        lifecycle: attributes.lifecycle,
-        settings: attributes.settings,
-        type: node.tag as any,
-        content: UnparseXML(node.nodes).trim(),
-    } as OutputConfig;
-    return output;
+    throw 'Not a component';
 }
 
 function ImportAttributes(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
-    const attributes = { config: {}, settings: {}, lifecycle: {} };
+    const attributes = { attributes: {}, settings: {}, events: {} };
     for (const key in dictionary) {
-        const { type, value } = dictionary[key];
+        const { value } = dictionary[key];
         if (key.indexOf('on:') == 0) {
-            attributes.lifecycle[key.slice(3)] = value;
-            continue;
-        }
-        if (key.indexOf('setting:') == 0) {
-            attributes.settings[key.slice(8)] = value;
-            continue;
-        }
-        if (key.indexOf('s:') == 0) {
-            attributes.settings[key.slice(2)] = value;
+            attributes.events[key.slice(3)] = value;
             continue;
         }
         switch (key) {
-            case 'component':
             case 'id':
             case 'class':
             case 'bind':
-                if (type == 'json')
-                    attributes.config[key] = value;
-                break;
+            case 'unlock':
             case 'lock':
-            case 'hide':
-                attributes.config[key] = value;
+            case 'if':
+                attributes.attributes[key] = value;
                 break;
             case 'settings':
                 if (typeof value == 'object' && !Array.isArray(value)) {
@@ -153,6 +135,7 @@ function ImportAttributes(dictionary: { [key: string]: { key: string; value: any
     }
     return attributes;
 }
+
 function ImportScripts(nodes: XMLNode[]) {
     const scripts = {};
     for (const node of nodes) {
