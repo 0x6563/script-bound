@@ -12,9 +12,9 @@ export class ApplicationController {
         public config: ScriptBoundConfig,
         data: any
     ) {
-        for (const key in config.scripts) {
-            this.rules[key] = config.scripts[key];
-        }
+        // for (const key in config.scripts) {
+        //     this.rules[key] = config.scripts[key];
+        // }
 
         this.observer = new ObjectMutationObserver({
             emit: 'sync',
@@ -23,10 +23,6 @@ export class ApplicationController {
             tagFunctions: ['array-mutators']
         });
         this.data = this.observer.watch(data);
-    }
-
-    layout(id: string) {
-        return this.config.layouts[id];
     }
 
     test(data: any, rule?: string | boolean | object) {

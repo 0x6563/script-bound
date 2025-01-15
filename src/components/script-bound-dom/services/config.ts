@@ -1,4 +1,4 @@
-import type { ContainerConfig, ComponentDefinition, ScriptBoundConfig, InputConfig, ListConfig, OutputConfig } from "./types/types.js";
+import type { ContainerConfig, ScriptBoundConfig, InputConfig, ListConfig, OutputConfig } from "./types/types.js";
 import { Parse } from 'grammar-well/parse';
 import grammar from './xml.js';
 import { ComponentsByName } from "../components/registry.js";
@@ -11,109 +11,101 @@ export function ParseConfigString(input: string): ScriptBoundConfig | undefined 
             return;
         }
         const xml: XML = parsed.result;
-        const config: ScriptBoundConfig = {} as any;
-        for (const node of xml.nodes) {
-            if (node && (node as any)?.tag == 'layouts') {
-                config.layouts = ImportLayoutConfig(node as XMLElement);
-            }
-
-            if (node && (node as any)?.tag == 'scripts') {
-                config.scripts = ImportScripts((node as XMLElement).nodes);
-            }
-
-            if (node && (node as any)?.tag == 'style') {
-                config.style = ImportText((node as XMLElement).nodes);
-            }
-        }
-        return config;
+        return ConvertXMLElements(xml.nodes);
     } catch (error) {
         console.log(error);
     }
-    // return { layouts, rules }
 }
 
-function ImportLayoutConfig(xml: XMLElement) {
-    const layouts: ScriptBoundConfig['layouts'] = {} as any;
-    for (const node of xml.nodes) {
-        if (node && 'tag' in node) {
-            layouts[node.attributes?.id.value] = ImportLayouts((node as XMLElement).nodes, true)[0];
-        }
-    }
-    return layouts;
-}
-
-function ImportLayouts(nodes: XMLNode[], first?: true): ComponentDefinition[] {
-    const elements: ComponentDefinition[] = [];
-    for (const node of nodes) {
-        if (node && 'attributes' in node) {
-            elements.push(ImportLayout(node));
-            if (first) {
-                break;
+function ConvertXMLElement(node: XMLElement): ScriptBoundConfig {
+    const ImportRegistry = {
+        container(node: XMLElement, component: string = 'flow'): ScriptBoundConfig {
+            const attributes = ImportAttributes(node.attributes);
+            const config = ConvertXMLElements(node.nodes);
+            const layout: ContainerConfig = {
+                ...attributes,
+                type: 'container',
+                component: node.attributes.type?.value || component,
+                events: config.events,
+                content: config.layout,
+            };
+            return { ...config, layout: [layout] };
+        },
+        list(node: XMLElement, component: string = 'multi'): ScriptBoundConfig {
+            const attributes = ImportAttributes(node.attributes);
+            const config = ConvertXMLElements(node.nodes);
+            const layout: ListConfig = {
+                ...attributes,
+                type: 'list',
+                component: node.attributes.type?.value || component,
+                events: config.events,
+                template: config.layout[0]
             }
+            return { ...config, layout: [layout] };
+        },
+        input(node: XMLElement, component: string = 'textbox'): ScriptBoundConfig {
+            const attributes = ImportAttributes(node.attributes);
+            const config = ConvertXMLElements(node.nodes);
+            const input: InputConfig = {
+                ...attributes,
+                type: 'input',
+                events: config.events,
+                component: node.attributes.type?.value || component,
+            };
+            return { events: {}, style: '', layout: [input] };
+        },
+        output(node: XMLElement, component: string = 'html'): ScriptBoundConfig {
+            const attributes = ImportAttributes(node.attributes);
+            // const config = ConvertXMLElements(node.nodes);
+            const output: OutputConfig = {
+                ...attributes,
+                type: 'output',
+                component: node.attributes.type?.value || component,
+                events: {},
+                content: UnparseXML(node.nodes).trim(),
+            };
+            return { events: {}, style: '', layout: [output] };
+        },
+        script(node: XMLElement): ScriptBoundConfig {
+            const events = ImportScriptEvents(node.attributes);
+            console.log(events);
+            const r = { events: events.reduce((c, n) => ({ ...c, [n]: node.nodes[0] as any }), {}), style: '', layout: [] };
+            console.log(r);
+            return r;
+        },
+        style(node: XMLElement): ScriptBoundConfig {
+            return { events: {}, style: (node.nodes[0]! as XMLText).text!.trim(), layout: [] };
         }
     }
-    return elements;
-}
 
-const ImportRegistry = {
-    container(node: XMLElement, component: string = 'flow'): ContainerConfig {
-        const attributes = ImportAttributes(node.attributes);
-        const layout: ContainerConfig = {
-            ...attributes,
-            type: 'container',
-            component: node.attributes.type?.value || component,
-            content: ImportLayouts(node.nodes)
-        };
-        return layout;
-    },
-    list(node: XMLElement, component: string = 'multi'): ListConfig {
-        const attributes = ImportAttributes(node.attributes);
-        const layout: ListConfig = {
-            ...attributes,
-            type: 'list',
-            component: node.attributes.type?.value || component,
-            template: ImportLayouts(node.nodes, true)[0]
-        }
-        return layout;
-    },
-    input(node: XMLElement, component: string = 'textbox'): InputConfig {
-        const attributes = ImportAttributes(node.attributes);
-        const input: InputConfig = {
-            ...attributes,
-            type: 'input',
-            component: node.attributes.type?.value || component,
-        };
-        return input;
-    },
-    output(node: XMLElement, component: string = 'html'): OutputConfig {
-        const attributes = ImportAttributes(node.attributes);
-        const output: OutputConfig = {
-            ...attributes,
-            type: 'output',
-            component: node.attributes.type?.value || component,
-            content: UnparseXML(node.nodes).trim(),
-        };
-        return output;
-    }
-}
-
-function ImportLayout(node: XMLElement) {
     if (node.tag in ImportRegistry) {
         return ImportRegistry[node.tag](node)
     } else if (ComponentsByName[node.tag].type in ImportRegistry) {
         return ImportRegistry[ComponentsByName[node.tag].type](node, node.tag);
     };
+
     throw 'Not a component';
 }
 
-function ImportAttributes(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
-    const attributes = { attributes: {}, settings: {}, events: {} };
-    for (const key in dictionary) {
-        const { value } = dictionary[key];
-        if (key.indexOf('on:') == 0) {
-            attributes.events[key.slice(3)] = value;
-            continue;
+function ConvertXMLElements(nodes: XMLNode[] = []): ScriptBoundConfig {
+    const result: ScriptBoundConfig = { layout: [], events: {}, style: '' };
+    for (const node of nodes) {
+        if (node && 'attributes' in node) {
+            const config = ConvertXMLElement(node);
+            result.layout.push(...config.layout);
+            result.style += config.style;
+            Object.assign(result.events, config.events);
         }
+    }
+    return result;
+}
+
+function ImportAttributes(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
+    const attributes = { attributes: {}, settings: {}, custom: {} };
+    for (const key in dictionary) {
+        const { value, type } = dictionary[key];
+        // const attr = { value, type };
+        const attr = value;
         switch (key) {
             case 'id':
             case 'class':
@@ -121,38 +113,29 @@ function ImportAttributes(dictionary: { [key: string]: { key: string; value: any
             case 'unlock':
             case 'lock':
             case 'if':
-                attributes.attributes[key] = value;
+            case 'slots':
+                attributes.attributes[key] = attr;
                 break;
             case 'settings':
-                if (typeof value == 'object' && !Array.isArray(value)) {
-                    Object.assign(attributes.settings, value)
+                if (typeof attr == 'object' && !Array.isArray(attr)) {
+                    Object.assign(attributes.settings, attr)
                 }
                 break;
+            case 'type':
+                break;
             default:
-                attributes.settings[key] = value;
+                attributes.custom[key] = attr;
                 break;
         }
     }
     return attributes;
 }
 
-function ImportScripts(nodes: XMLNode[]) {
-    const scripts = {};
-    for (const node of nodes) {
-        if (node && 'attributes' in node && node?.tag == 'script' && node.attributes.id) {
-            scripts[node.attributes.id.value] = node.nodes[0];
-        }
-    }
-    return scripts;
 
+function ImportScriptEvents(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
+    const e = dictionary.on.value || 'global';
+    return Array.isArray(e) ? e : [e];
 }
-
-function ImportText(nodes: XMLNode[]) {
-    if (nodes[0] && 'text' in nodes[0]) {
-        return nodes[0].text.trim();
-    }
-}
-
 function UnparseXML(xml: XMLNode | XMLNode[] = null, disabled = { script: true, style: true }) {
     let s = '';
     if (!xml) {

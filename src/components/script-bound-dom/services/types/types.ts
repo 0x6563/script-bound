@@ -5,32 +5,29 @@ import type { ListComponent } from "./list";
 import type { OutputComponent } from "./output";
 
 export interface ScriptBoundConfig {
-    layouts: {
-        main: ComponentDefinition;
-        [key: string]: ComponentDefinition;
-    };
-    scripts?: {
-        [key: string]: string;
-    }
-    style?: string
+    layout: ComponentConfig[];
+    events: Lifecycles;
+    style: string
 }
 
-export type ComponentDefinition<T extends ComponentSettings = ComponentSettings> = ContainerConfig<T> | ListConfig<T> | InputConfig<T> | OutputConfig<T>;
+export type ComponentConfig<T extends ComponentSettings = ComponentSettings> = ContainerConfig<T> | ListConfig<T> | InputConfig<T> | OutputConfig<T>;
 
 export interface ContainerConfig<T = ComponentSettings> {
     type: 'container';
     component: string;
     attributes: ComponentAttributes;
+    events: Lifecycles;
     settings: T;
-    content: ComponentDefinition[];
+    content: ComponentConfig[];
 }
 
 export interface ListConfig<T = ComponentSettings> {
     type: 'list';
     component: string;
     attributes: ComponentAttributes;
+    events: Lifecycles;
     settings: T;
-    template: ComponentDefinition;
+    template: ComponentConfig;
 }
 
 export interface InputConfig<T = ComponentSettings> {
@@ -45,6 +42,7 @@ export interface OutputConfig<T = ComponentSettings> {
     type: 'output';
     component: string;
     attributes: ComponentAttributes;
+    events: Lifecycles;
     settings: T;
     content?: string;
 }
@@ -54,14 +52,17 @@ export type ComponentAttributes = Bindable & ConditionalEdit & ConditionalShow &
 export type ComponentSettings = {}
 
 export interface Lifecycles {
-    'load'?: string[];
-    'update'?: string[];
-    'trigger'?: string[];
-    'unload'?: string[];
+    'load'?: ScriptTree;
+    'update'?: ScriptTree;
+    'unload'?: ScriptTree;
 }
 
 export interface Bindable {
     bind?: string;
+}
+
+export interface ConditionalShow {
+    if?: boolean | string;
 }
 
 export interface ConditionalEdit {
@@ -69,9 +70,6 @@ export interface ConditionalEdit {
     unlock?: boolean | string;
 }
 
-export interface ConditionalShow {
-    if?: boolean | string;
-}
 export interface QuerySelectors {
     id?: string;
     class?: string;
@@ -85,12 +83,10 @@ export interface LayoutFlow {
 
 export type FlowDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
 export type PositionalSide = 'left' | 'right' | 'bottom' | 'top';
- 
-export type Dictionary<T> = {
-    [key: string]: T
-}
 
 export type Component = ContainerComponent | ListComponent | InputComponent | OutputComponent;
 export type ComponentAttributesDictionary = {
     [key in keyof ComponentAttributes]: AttributeController;
 };
+
+export type ScriptTree = any;

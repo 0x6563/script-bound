@@ -1,42 +1,42 @@
-<layouts>
-    <layout id="main">
-        <container flow="top-bottom">
-            <container settings={"flow":"left-right"} bind="$.personal">
-                <html bind="@path" />
-                <html>Template Defined <b style="color:red;">HTML</b></html>
-                <html bind="$root.html" />
-            </container>
-            <container settings={"flow":"left-right"} bind="$.personal">
-                <input type="text" bind="$.firstName" label="First Name" />
-                <input if=($ == "Jane") type="text" bind="$.firstName" label="First Name" />
-                <input type="text" bind="$.lastName" label="Last Name" />
-            </container>
-            <html>
-                Phone numbers 
-            </html>
-            <list type="tabs" side="left" bind="$.contact">
-                <container>
-                    <html bind="@path" />
-                    <input type="text" bind="$.type" />
-                    <input type="text" bind="$.phoneNumber" />
-                </container>
-            </list>
-            <html>
-                Phone numbers but filtered for mobile only
-            </html>
-            <list type="tabs" settings={"side":"top"} bind="$.contact">
-                <container if="isHome">
-                    <html bind="@path" />
-                    <input type="text" bind="$.type" />
-                    <input type="text" bind="$.phoneNumber" />
-                </container>
-            </list>
+<container>
+    <script on="load">
+        var a = $.firstName;
+    </script>
+    <container settings={"flow":"left-right"} bind="$.personal">
+        <html bind="@path" />
+        <html>Template Defined <b style="color:red;">HTML</b></html>
+        <html bind="$root.html" />
+    </container>
+    <container bind="$.personal" settings={"flow":"left-right"}>
+        <input type="text" bind="$.firstName" settings={ "label": "First Name" }>
+            <script on="update">
+                var a = $.firstName;
+            </script>
+        </input>
+        <input if=($ == "Jane") type="text" bind="$.firstName" settings={ "label": "First Name" }/>
+        <input type="text" bind="$.lastName" settings={ "label": "Last Name" } />
+    </container>
+    <html>
+        Phone numbers 
+    </html>
+    <list type="tabs" settings={"side":"left"} bind="$.contact">
+        <container>
+            <html bind="@path" />
+            <input type="text" bind="$.type" />
+            <input type="text" bind="$.phoneNumber" />
         </container>
-    </layout>
-</layouts>
-<scripts>
-    <script id="isHome"> $.type == "mobile" </script>
-</scripts>
+    </list>
+    <html>
+        Phone numbers but filtered for mobile only
+    </html>
+    <list type="tabs" settings={"side":"top"} bind="$.contact">
+        <container if=($.type == "mobile" )>
+            <html bind="@path" />
+            <input type="text" bind="$.type" />
+            <input type="text" bind="$.phoneNumber" />
+        </container>
+    </list>
+</container>
 <style>
     input {
         color: red;

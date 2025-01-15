@@ -4,8 +4,13 @@ export function CreateElementNode(type: string): DOMNodeLike {
 
 export class VirtualElement implements DOMNodeLike {
     innerHTML: string = '';
+    parentNode: DOMNodeLike | null = null;
+
     constructor(private type: string) { }
 
+    insertBefore(element: DOMNodeLike, reference: DOMNodeLike) {
+        throw new Error("Method not implemented.");
+    }
     setAttribute(key: string, value: string): void {
         throw new Error("Method not implemented.");
     }

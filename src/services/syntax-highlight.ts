@@ -1,5 +1,5 @@
 import { CreateMonarchTokenizer } from "grammar-well/utility";
-import grammar from "./xml.js";
+import grammar from "../components/script-bound-dom/services/xml.js"
 
 if (!window['Monaco']) {
   window['Monaco'] = await import('monaco-editor');

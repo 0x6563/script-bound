@@ -72,8 +72,7 @@ function OnChange() {
       <h1>
         <Toggle :value="state.render" :options="['Form', 'JSON']" @change="state.render = $event" />
       </h1>
-      <ScriptBound v-if="state.render == 'Form' && state.config" :data=state.data :config=state.config
-        @change=OnChange />
+      <ScriptBound v-if="state.render == 'Form' && state.config" :data=state.data :config=state.config @change=OnChange />
       <Code v-if="state.render == 'JSON'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />
     </div>
   </div>

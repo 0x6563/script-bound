@@ -1,4 +1,4 @@
-import type { Component, ComponentAttributesDictionary, ComponentDefinition, ComponentSettings, ContainerConfig, ListConfig } from '../types/types';
+import type { Component, ComponentAttributesDictionary, ComponentConfig, ComponentSettings, ContainerConfig, ListConfig } from '../types/types';
 import type { ApplicationController } from './application';
 import type { DOMNodeLike } from '../elements';
 import { DataController } from './data';
@@ -8,7 +8,7 @@ import { ErrorBox } from '../../components/debugs/error';
 import type { InputComponent } from '../types/input';
 
 export class ComponentController<T extends ComponentSettings = {}> {
-    config: ComponentDefinition<T>;
+    config: ComponentConfig<T>;
     data: DataController;
     application: ApplicationController;
     attributes: {
@@ -194,12 +194,12 @@ export class ComponentController<T extends ComponentSettings = {}> {
 
 export type ComponentControllerConstructor<T extends ComponentSettings = {}> = {
     parent: ComponentController;
-    config: ComponentDefinition<T>;
+    config: ComponentConfig<T>;
 } | ComponentControllerContext<T>;
 
 export interface ComponentControllerContext<T extends ComponentSettings = any> {
     application: ApplicationController;
     attributes: ComponentAttributesDictionary;
     data: DataController;
-    config: ComponentDefinition<T>;
+    config: ComponentConfig<T>;
 }
