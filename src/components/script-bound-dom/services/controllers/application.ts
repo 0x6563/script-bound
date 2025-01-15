@@ -1,8 +1,9 @@
 import type { ScriptBoundConfig } from "../types/types";
-import { ObjectMutationObserver, type ChangeCallback } from "object-mutation-observer";
+import { ObjectMutationObserver } from "object-mutation-observer";
+// import { ObjectMutationObserver, type ChangeCallback } from "object-mutation-observer";
 import { Run } from "moderate-code-interpreter";
 import { CreateElementNode, type DOMNodeLike } from "../elements";
-
+type ChangeCallback = (e: any) => void;
 export class ApplicationController {
     observer: ObjectMutationObserver;
     data: any;
