@@ -1,21 +1,26 @@
-import type { ScriptBoundConfig } from "../types/types";
+import type { ComponentASTNode, ComponentsDictionary, ScriptBoundConfig, ValueType } from "../types/types";
 import { ObjectMutationObserver } from "object-mutation-observer";
 // import { ObjectMutationObserver, type ChangeCallback } from "object-mutation-observer";
 import { Run } from "moderate-code-interpreter";
-import { CreateElementNode, type DOMNodeLike } from "../elements";
+import { CreateElementNode, CreateTextNode, type ElementNodeLike, type TextNodeLike } from "../elements";
+import { ComponentsByName } from "../../components/registry";
+import { ExpressionComponent } from "../../components/expression";
+import { HTMLTextComponent } from "../../components/text";
+import { HTMLElementComponent } from "../../components/html";
 type ChangeCallback = (e: any) => void;
+
 export class ApplicationController {
     observer: ObjectMutationObserver;
     data: any;
-    private listeners: WeakMap<any, { main: ChangeCallback, listeners: Set<ChangeCallback> }> = new WeakMap();
     rules: { [key: string]: any } = {};
+    private listeners: WeakMap<any, { main: ChangeCallback, listeners: Set<ChangeCallback> }> = new WeakMap();
+    private components: ComponentsDictionary;
     constructor(
         public config: ScriptBoundConfig,
         data: any
     ) {
-        // for (const key in config.scripts) {
-        //     this.rules[key] = config.scripts[key];
-        // }
+        this.components = { ...ComponentsByName, ...config.components };
+        console.log(this.components);
 
         this.observer = new ObjectMutationObserver({
             emit: 'sync',
@@ -27,10 +32,10 @@ export class ApplicationController {
     }
 
     test(data: any, rule?: string | boolean | object) {
-
         if (typeof rule == 'undefined') {
             return false;
         }
+
         if (typeof rule == 'boolean') {
             return rule;
         }
@@ -44,7 +49,7 @@ export class ApplicationController {
         }
     }
 
-    createNode(type: string, attributes: { [key: string]: string | undefined | null } = {}, events: { [key: string]: (e: any) => void } = {}): DOMNodeLike {
+    createNode(type: string, attributes: { [key: string]: string | undefined | null } = {}, events: { [key: string]: (e: any) => void } = {}): ElementNodeLike {
         const node = CreateElementNode(type);
         for (const key in attributes) {
             node.setAttribute(key, attributes[key] || '');
@@ -55,6 +60,9 @@ export class ApplicationController {
         return node;
     }
 
+    createText(text: string): TextNodeLike {
+        return CreateTextNode(text);
+    }
 
     watch(data: any, callback: ChangeCallback) {
         if (!this.listeners.has(data)) {
@@ -65,6 +73,7 @@ export class ApplicationController {
         }
         this.listeners.get(data)?.listeners.add(callback);
     }
+
     unwatch(data: any, callback: ChangeCallback) {
         const callbacker = this.listeners.get(data);
         callbacker?.listeners.delete(callback);
@@ -72,7 +81,16 @@ export class ApplicationController {
             this.listeners.delete(data);
             this.observer.unwatch(data, callbacker.main);
         }
+    }
 
+    getComponent(node: ComponentASTNode): ValueType<ComponentsDictionary> {
+        if (node.type == 'expression')
+            return ExpressionComponent as any;
+        if (node.type == 'text')
+            return HTMLTextComponent as any;
+        if (node.type == 'html')
+            return HTMLElementComponent as any;
+        return this.components[node.component] || this.components.error;
     }
 }
 

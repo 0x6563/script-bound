@@ -1,36 +1,41 @@
 import type { AttributeController } from "../controllers/attribute";
-import type { ContainerComponent } from "./container";
-import type { InputComponent } from "./input";
-import type { ListComponent } from "./list";
-import type { OutputComponent } from "./output";
+import type { ComponentController, ComponentControllerConstructor } from "../controllers/component";
+import type { ContainerComponent } from "../../components/container";
+import type { InputComponent } from "../../components/input";
+import type { ListComponent } from "../../components/list";
+import type { OutputComponent } from "../../components/output";
+import type { ExpressionComponent } from "../../components/expression";
+import type { HTMLElementComponent } from "../../components/html";
+import type { HTMLTextComponent } from "../../components/text";
 
 export interface ScriptBoundConfig {
-    layout: ComponentConfig[];
+    layout: ComponentASTNode[];
     events: Lifecycles;
-    style: string
+    style: string;
+    components?: ComponentsDictionary;
 }
 
-export type ComponentConfig<T extends ComponentSettings = ComponentSettings> = ContainerConfig<T> | ListConfig<T> | InputConfig<T> | OutputConfig<T>;
+export type ComponentASTNode<T extends ComponentSettings = {}> = ContainerComponentASTNode<T> | ListComponentASTNode<T> | InputComponentASTNode<T> | OutputComponentASTNode<T> | ExpressionASTNode | TextASTNode | HTMLElementASTNode;
 
-export interface ContainerConfig<T = ComponentSettings> {
+export interface ContainerComponentASTNode<T extends ComponentSettings = {}> {
     type: 'container';
     component: string;
     attributes: ComponentAttributes;
     events: Lifecycles;
     settings: T;
-    content: ComponentConfig[];
+    content: ComponentASTNode[];
 }
 
-export interface ListConfig<T = ComponentSettings> {
+export interface ListComponentASTNode<T extends ComponentSettings = {}> {
     type: 'list';
     component: string;
     attributes: ComponentAttributes;
     events: Lifecycles;
     settings: T;
-    template: ComponentConfig;
+    template: ComponentASTNode;
 }
 
-export interface InputConfig<T = ComponentSettings> {
+export interface InputComponentASTNode<T extends ComponentSettings = {}> {
     type: 'input';
     component: string;
     attributes: ComponentAttributes;
@@ -38,13 +43,36 @@ export interface InputConfig<T = ComponentSettings> {
     settings: T;
 }
 
-export interface OutputConfig<T = ComponentSettings> {
+export interface OutputComponentASTNode<T extends ComponentSettings = {}> {
     type: 'output';
     component: string;
     attributes: ComponentAttributes;
     events: Lifecycles;
     settings: T;
-    content?: string;
+    content: ComponentASTNode[];
+}
+
+export interface ExpressionASTNode<T extends ComponentSettings = {}> {
+    type: 'expression';
+    attributes?: never;
+    expression: ScriptTree;
+    settings: T;
+}
+
+export interface HTMLElementASTNode<T extends ComponentSettings = {}> {
+    type: 'html';
+    tag: string;
+    attributes: ComponentAttributes;
+    content: ComponentASTNode[];
+    settings: T;
+    custom: ComponentAttributes;
+}
+
+export interface TextASTNode<T extends ComponentSettings = {}> {
+    type: 'text';
+    content: string;
+    attributes?: never;
+    settings: T;
 }
 
 export type ComponentAttributes = Bindable & ConditionalEdit & ConditionalShow & QuerySelectors;
@@ -89,4 +117,12 @@ export type ComponentAttributesDictionary = {
     [key in keyof ComponentAttributes]: AttributeController;
 };
 
+export interface ComponentsDictionary {
+    [key: string]: {
+        Type: 'script' | 'style' | 'input' | 'output' | 'container' | 'list' | 'expression' | 'html' | 'text',
+        new(component: ComponentController<any>): InputComponent<any> | OutputComponent<any> | ListComponent<any> | ContainerComponent<any> | ExpressionComponent | HTMLElementComponent | HTMLTextComponent;
+        Controller<T extends ComponentSettings = {}>(config: ComponentControllerConstructor<T>): ComponentController<T>;
+    };
+}
+export type ValueType<T> = T[keyof T]
 export type ScriptTree = any;

@@ -1,10 +1,14 @@
-export function CreateElementNode(type: string): DOMNodeLike {
-    return document.createElement(type) as unknown as DOMNodeLike;
+export function CreateElementNode(type: string): ElementNodeLike {
+    return document.createElement(type) as ElementNodeLike;
 }
 
-export class VirtualElement implements DOMNodeLike {
+export function CreateTextNode(text: string): TextNodeLike {
+    return document.createTextNode(text);
+}
+
+export class VirtualElement implements ElementNodeLike {
     innerHTML: string = '';
-    parentNode: DOMNodeLike | null = null;
+    parentNode: ElementNodeLike | null = null;
 
     constructor(private type: string) { }
 
@@ -34,10 +38,15 @@ export class VirtualElement implements DOMNodeLike {
     }
 }
 
+export type DOMNodeLike = TextNodeLike | ElementNodeLike;
 
-export interface DOMNodeLike {
+export interface TextNodeLike {
+    textContent: string | null;
+}
+
+export interface ElementNodeLike {
     innerHTML: string;
-    parentNode: null | DOMNodeLike;
+    parentNode: null | ElementNodeLike;
     setAttribute(key: string, value: string): void;
     addEventListener(type: string, callback: any): void;
     removeEventListener(type: string, callback: any): void;

@@ -1,18 +1,18 @@
-import type { PositionalSide } from "../../services/types/types.ts";
+import type { ListComponentASTNode, PositionalSide } from "../../services/types/types.ts";
 import type { ComponentController } from "../../services/controllers/component.ts";
 import { PickOne } from '../../services/utility.ts';
-import { ListComponent } from "../../services/types/list.ts";
+import { ListComponent } from "../list.ts";
 
 const sides = new Set(['top', 'left', 'right', 'bottom', 'none']);
 export class Tabs extends ListComponent<{ side: PositionalSide }> {
     private attributes;
 
-    constructor(protected component: ComponentController<{ side: PositionalSide }>) {
-        super(component);
+    constructor(protected controller: { config: ListComponentASTNode<{ side: PositionalSide }> } & ComponentController) {
+        super(controller);
         this.attributes = {
             'data-control': "list",
             'data-component': "tabs",
-            'data-tab-side': PickOne(sides, this.component.config.settings.side, 'top')
+            'data-tab-side': PickOne(sides, this.controller.config.settings.side, 'top')
         }
     }
 
@@ -20,25 +20,25 @@ export class Tabs extends ListComponent<{ side: PositionalSide }> {
         const items: any[] = [];
         const labels: any[] = [];
 
-        const container = this.component.application.createNode('div', this.attributes);
+        const container = this.controller.application.createNode('div', this.attributes);
 
-        const labelsContainer = this.component.application.createNode('div');
+        const labelsContainer = this.controller.application.createNode('div');
         labelsContainer.setAttribute('data-element', 'labels');
         container.appendChild(labelsContainer);
 
-        const viewportContainer = this.component.application.createNode('div');
+        const viewportContainer = this.controller.application.createNode('div');
         viewportContainer.setAttribute('data-element', 'viewport');
         container.appendChild(viewportContainer);
 
         for (let i = 0; i < subcomponents.length; i++) {
             const component = subcomponents[i];
-            const labelTab = this.component.application.createNode('div');
+            const labelTab = this.controller.application.createNode('div');
             labelTab.setAttribute('data-element', 'label');
             labelTab.innerHTML = component.data.bind as string;
             labelTab.addEventListener('click', () => setActive(i));
             labelsContainer.appendChild(labelTab);
 
-            const viewportChild = this.component.application.createNode('div');
+            const viewportChild = this.controller.application.createNode('div');
             viewportChild.setAttribute('data-element', 'viewport-child');
             if (component) {
                 const doms = component.connect();

@@ -1,13 +1,14 @@
 import { GetLayoutFlow } from "../../services/utility.ts";
 import type { ComponentController } from "../../services/controllers/component.ts";
-import { ContainerComponent } from "../../services/types/container.ts";
+import { ContainerComponent } from "../container.ts";
+import type { LayoutFlow } from "../../services/types/types.ts";
 
-export class Flow extends ContainerComponent {
+export class Flow extends ContainerComponent<LayoutFlow> {
     private attributes;
 
-    constructor(protected component: ComponentController) {
-        super(component);
-        const { direction, wrap } = GetLayoutFlow(this.component.config.settings);
+    constructor(protected controller: ComponentController<LayoutFlow>) {
+        super(controller);
+        const { direction, wrap } = GetLayoutFlow(this.controller.config.settings);
         this.attributes = {
             'data-flow': direction?.toString(),
             'data-wrap': wrap.toString(),
@@ -17,7 +18,7 @@ export class Flow extends ContainerComponent {
     }
 
     connect(subcomponents: ComponentController[]) {
-        const container = this.component.application.createNode('div', this.attributes);
+        const container = this.controller.application.createNode('div', this.attributes);
         for (const component of subcomponents) {
             const doms = component.connect();
             for (const dom of doms) {

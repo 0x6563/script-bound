@@ -1,11 +1,11 @@
 import type { ComponentController } from "../../services/controllers/component.ts";
-import { ListComponent } from "../../services/types/list.ts";
+import { ListComponent } from "../list.ts";
 
 export class Single extends ListComponent {
     private attributes;
 
-    constructor(protected component: ComponentController) {
-        super(component);
+    constructor(protected controller: any) {
+        super(controller);
         this.attributes = {
             'data-control': "list",
             'data-component': "single",
@@ -13,7 +13,7 @@ export class Single extends ListComponent {
     }
 
     connect(subcomponents: ComponentController[]) {
-        const container = this.component.application.createNode('div', this.attributes);
+        const container = this.controller.application.createNode('div', this.attributes);
         const component = subcomponents[subcomponents.length - 1]
         if (component) {
             const doms = component.connect();

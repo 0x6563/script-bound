@@ -6,6 +6,7 @@ lexer {
 
 	[root]
 		- import commentStart
+		- before r:{<\(} goto interpolate
 		- when r:{</} goto footTag
 		- when r:{<} goto headTag
 		- when r:{[^<]+} tag "text"
@@ -20,6 +21,11 @@ lexer {
 		- when r:{\s+} tag "space"
 		- when r:{[a-z_A-Z:!][a-z_A-Z\d\-:!]*} tag "word" highlight "tag"
 		- when ">" pop
+	
+	[interpolate]
+		- when ">" pop
+		- when "<"
+		- when "(" goto MC_root
 
 	[attributes]
 		- when "/>" pop
@@ -131,6 +137,7 @@ grammar {
 		| Script
 		| <text> => ( { text: $0.value } )
 		| "<!--" <text> "-->" => ( null )
+		| "<" "(" _ MC_Body@script _ ")" ">" => ( { literal: $script }  )
 
 	[Element]
 		| "<" ElementHead _ ">" _ XMLPlus _ "</" <word> ">" => ( { tag: $1.tag, attributes: $1.attributes , nodes: $5.nodes} )

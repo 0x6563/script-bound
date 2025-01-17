@@ -4,7 +4,8 @@
     </script>
     <container settings={"flow":"left-right"} bind="$.personal">
         <html bind="@path" />
-        <html>Template Defined <b style="color:red;">HTML</b></html>
+        Hello my name is <($.firstName)><(" ")><($.lastName)>
+        <div>Template Defined <b style="color:red;">HTML</b></div>
         <html bind="$root.html" />
     </container>
     <container bind="$.personal" settings={"flow":"left-right"}>

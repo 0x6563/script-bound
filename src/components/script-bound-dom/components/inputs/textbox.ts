@@ -1,20 +1,20 @@
-import type { DOMNodeLike } from "../../services/elements.ts";
+import type { DOMNodeLike, ElementNodeLike } from "../../services/elements.ts";
 import { Events } from "../../services/events.ts";
-import { InputComponent } from "../../services/types/input.ts";
+import { InputComponent } from "../input.ts";
 
 export class Textbox extends InputComponent<{ label: string }> {
     private events: Events<{ value: boolean }> = new Events();
-    private input?: DOMNodeLike;
+    private input?: ElementNodeLike;
 
     connect(): DOMNodeLike[] {
-        const container = this.component.application.createNode('label');
-        this.input = this.component
+        const container = this.controller.application.createNode('label');
+        this.input = this.controller
             .application
             .createNode(
                 'input',
                 {
                     type: 'text',
-                    value: this.component.data.value
+                    value: this.controller.data.value
                 },
                 {
                     change: (e) => { this.events.emit({ value: e.target.value }) }
@@ -22,8 +22,8 @@ export class Textbox extends InputComponent<{ label: string }> {
             );
         container.appendChild(this.input);
 
-        const text = this.component.application.createNode('div', { 'data-bound-label': '' });
-        text.innerHTML = this.component.config.settings?.label || '&nbsp;';
+        const text = this.controller.application.createNode('div', { 'data-bound-label': '' });
+        text.innerHTML = this.controller.config.settings?.label || '&nbsp;';
         container.appendChild(text);
         return [container];
     }

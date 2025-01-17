@@ -33,12 +33,10 @@ export class AttributeController {
 
         this.locked = false;
         const state = this.application.test(this.data.proxy(), this.condition);
-        console.log(state);
         this.applyState(state);
     }
 
     applyState(state: boolean, lock?: boolean) {
-        console.log(state);
         this.locked = !!lock;
         if (state != this.value) {
             this.$state = state;

@@ -7,42 +7,18 @@ import { Html } from './outputs/html.ts';
 import { Flow } from "./containers/flow.ts";
 import { DebugDump } from "./debugs/dump.ts";
 import { DebugError } from "./debugs/error.ts";
+import type { ComponentsDictionary } from '../services/types/types.ts';
 
-export const ComponentsByType = {
-    input: {
-        text: Textbox,
-        textbox: Textbox,
-        checkbox: Checkbox
-    },
-    list: {
-        multi: Multi,
-        single: Single,
-        tabs: Tabs,
-    },
-    output: {
-        html: Html
-    },
-    container: {
-        flow: Flow
-    },
-    debug: {
-        dump: DebugDump,
-        error: DebugError
-    },
-}
-export const ComponentsByName = {
-    textbox: Textbox,
-    checkbox: Checkbox,
-    multi: Multi,
-    single: Single,
-    tabs: Tabs,
-    html: Html,
-    flow: Flow,
-    dump: DebugDump,
-    error: DebugError
+export const ComponentsByName: ComponentsDictionary = {
+    textbox: Textbox as any,
+    text: Textbox as any,
+    checkbox: Checkbox as any,
+    multi: Multi as any,
+    single: Single as any,
+    tabs: Tabs as any,
+    html: Html as any,
+    flow: Flow as any,
+    dump: DebugDump as any,
+    error: DebugError as any
 }
 
-
-export function GetComponent(group: "container" | "list" | "input" | "output", name: string): typeof ComponentsByName[keyof typeof ComponentsByName] {
-    return ComponentsByType[group]?.[name] || ComponentsByName[name] || ComponentsByName.error;
-}

@@ -487,7 +487,8 @@ class grammar {
                     { name: "Node", postprocess: ({data}) => { return (data[0]); }, symbols: [ "Element" ] },
                     { name: "Node", postprocess: ({data}) => { return (data[0]); }, symbols: [ "Script" ] },
                     { name: "Node", postprocess: ({data}) => { return ({ text: data[0].value }); }, symbols: [ { token: "text" } ] },
-                    { name: "Node", postprocess: ({data}) => { return (null); }, symbols: [ { literal: "<!--" }, { token: "text" }, { literal: "-->" } ] }
+                    { name: "Node", postprocess: ({data}) => { return (null); }, symbols: [ { literal: "<!--" }, { token: "text" }, { literal: "-->" } ] },
+                    { name: "Node", postprocess: ({data}) => { return ({ literal: data[3] }); }, symbols: [ { literal: "<" }, { literal: "(" }, "_", "MC_Body", "_", { literal: ")" }, { literal: ">" } ] }
                 ],
                 Number: [
                     { name: "Number", postprocess: ({data}) => { return (Number(data[0].value)); }, symbols: [ { token: "number" } ] }
@@ -749,6 +750,14 @@ class grammar {
                         { highlight: "tag", set: "stdHeadTag", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ }
                     ]
                 },
+                interpolate: {
+                    regex: /(?:(?:((?:>)))|(?:((?:<)))|(?:((?:\())))/ym,
+                    rules: [
+                        { pop: 1, when: ">" },
+                        { when: "<" },
+                        { goto: "MC_root", when: "(" }
+                    ]
+                },
                 json: {
                     regex: /(?:(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null))))/ym,
                     rules: [
@@ -1008,9 +1017,10 @@ class grammar {
                     ]
                 },
                 root: {
-                    regex: /(?:(?:((?:<!\-\-)))|(?:(<\/))|(?:(<))|(?:([^<]+)))/ym,
+                    regex: /(?:(?:((?:<!\-\-)))|(?:(<\())|(?:(<\/))|(?:(<))|(?:([^<]+)))/ym,
                     rules: [
                         { goto: "commentEnd", tag: ["commentStart"], when: "<!--" },
+                        { before: true, goto: "interpolate", when: /<\(/ },
                         { goto: "footTag", when: /<\// },
                         { goto: "headTag", when: /</ },
                         { tag: ["text"], when: /[^<]+/ }

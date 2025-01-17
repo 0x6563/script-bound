@@ -1,9 +1,10 @@
-import type { ContainerConfig, ScriptBoundConfig, InputConfig, ListConfig, OutputConfig } from "./types/types.js";
+import type { ContainerComponentASTNode, ScriptBoundConfig, InputComponentASTNode, ListComponentASTNode, OutputComponentASTNode, ComponentsDictionary, HTMLElementASTNode } from "./types/types.js";
 import { Parse } from 'grammar-well/parse';
 import grammar from './xml.js';
 import { ComponentsByName } from "../components/registry.js";
 
-export function ParseConfigString(input: string): ScriptBoundConfig | undefined {
+export function ParseConfigString(input: string, components: ComponentsDictionary = {}): ScriptBoundConfig | undefined {
+    let c = { ...ComponentsByName, ...components }
     try {
         const parsed = ParseSample(input);
         if (parsed.error) {
@@ -11,18 +12,19 @@ export function ParseConfigString(input: string): ScriptBoundConfig | undefined 
             return;
         }
         const xml: XML = parsed.result;
-        return ConvertXMLElements(xml.nodes);
+        console.log(xml);
+        return ConvertXMLElements(xml.nodes, c);
     } catch (error) {
         console.log(error);
     }
 }
 
-function ConvertXMLElement(node: XMLElement): ScriptBoundConfig {
+function ConvertXMLElement(node: XMLNode, components: ComponentsDictionary): ScriptBoundConfig {
     const ImportRegistry = {
         container(node: XMLElement, component: string = 'flow'): ScriptBoundConfig {
             const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes);
-            const layout: ContainerConfig = {
+            const config = ConvertXMLElements(node.nodes, components);
+            const layout: ContainerComponentASTNode = {
                 ...attributes,
                 type: 'container',
                 component: node.attributes.type?.value || component,
@@ -33,8 +35,8 @@ function ConvertXMLElement(node: XMLElement): ScriptBoundConfig {
         },
         list(node: XMLElement, component: string = 'multi'): ScriptBoundConfig {
             const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes);
-            const layout: ListConfig = {
+            const config = ConvertXMLElements(node.nodes, components);
+            const layout: ListComponentASTNode = {
                 ...attributes,
                 type: 'list',
                 component: node.attributes.type?.value || component,
@@ -45,8 +47,8 @@ function ConvertXMLElement(node: XMLElement): ScriptBoundConfig {
         },
         input(node: XMLElement, component: string = 'textbox'): ScriptBoundConfig {
             const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes);
-            const input: InputConfig = {
+            const config = ConvertXMLElements(node.nodes, components);
+            const input: InputComponentASTNode = {
                 ...attributes,
                 type: 'input',
                 events: config.events,
@@ -56,21 +58,19 @@ function ConvertXMLElement(node: XMLElement): ScriptBoundConfig {
         },
         output(node: XMLElement, component: string = 'html'): ScriptBoundConfig {
             const attributes = ImportAttributes(node.attributes);
-            // const config = ConvertXMLElements(node.nodes);
-            const output: OutputConfig = {
+            const config = ConvertXMLElements(node.nodes, components);
+            const output: OutputComponentASTNode = {
                 ...attributes,
                 type: 'output',
                 component: node.attributes.type?.value || component,
-                events: {},
-                content: UnparseXML(node.nodes).trim(),
+                events: config.events,
+                content: config.layout
             };
             return { events: {}, style: '', layout: [output] };
         },
         script(node: XMLElement): ScriptBoundConfig {
             const events = ImportScriptEvents(node.attributes);
-            console.log(events);
             const r = { events: events.reduce((c, n) => ({ ...c, [n]: node.nodes[0] as any }), {}), style: '', layout: [] };
-            console.log(r);
             return r;
         },
         style(node: XMLElement): ScriptBoundConfig {
@@ -78,24 +78,43 @@ function ConvertXMLElement(node: XMLElement): ScriptBoundConfig {
         }
     }
 
-    if (node.tag in ImportRegistry) {
-        return ImportRegistry[node.tag](node)
-    } else if (ComponentsByName[node.tag].type in ImportRegistry) {
-        return ImportRegistry[ComponentsByName[node.tag].type](node, node.tag);
-    };
+    if (!node) {
+        return { events: {}, style: '', layout: [] };
+    } else if ('text' in node) {
+        if (node.text.trim())
+            return { events: {}, style: '', layout: [{ type: 'text', content: node.text as string, settings: {} }] };
+        return { events: {}, style: '', layout: [] };
+    } else if ('literal' in node) {
+        return { events: {}, style: '', layout: [{ type: 'expression', expression: node.literal, settings: {} }] };
+    } else if (components[node.tag]?.Type in ImportRegistry) {
+        return ImportRegistry[components[node.tag]?.Type as keyof typeof ImportRegistry](node, node.tag);
+    } else if (node.tag in ImportRegistry) {
+        return ImportRegistry[node.tag](node);
+    } else if ('tag' in node) {
+        const attributes = ImportAttributes(node.attributes);
+        const config = ConvertXMLElements(node.nodes, components);
+        const output: HTMLElementASTNode = {
+            ...attributes,
+            type: 'html',
+            tag: node.tag,
+            content: config.layout,
+            settings: {
+                attributes: attributes.custom
+            }
+        };
+        return { events: {}, style: '', layout: [output] };
 
+    };
     throw 'Not a component';
 }
 
-function ConvertXMLElements(nodes: XMLNode[] = []): ScriptBoundConfig {
+function ConvertXMLElements(nodes: XMLNode[] = [], components: ComponentsDictionary): ScriptBoundConfig {
     const result: ScriptBoundConfig = { layout: [], events: {}, style: '' };
     for (const node of nodes) {
-        if (node && 'attributes' in node) {
-            const config = ConvertXMLElement(node);
-            result.layout.push(...config.layout);
-            result.style += config.style;
-            Object.assign(result.events, config.events);
-        }
+        const config = ConvertXMLElement(node, components);
+        result.layout.push(...config.layout);
+        result.style += config.style;
+        Object.assign(result.events, config.events);
     }
     return result;
 }
@@ -131,40 +150,41 @@ function ImportAttributes(dictionary: { [key: string]: { key: string; value: any
     return attributes;
 }
 
-
 function ImportScriptEvents(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
     const e = dictionary.on.value || 'global';
     return Array.isArray(e) ? e : [e];
 }
-function UnparseXML(xml: XMLNode | XMLNode[] = null, disabled = { script: true, style: true }) {
-    let s = '';
-    if (!xml) {
-        return s;
-    }
-    xml = Array.isArray(xml) ? xml : [xml];
-    for (const node of xml) {
-        if (!node)
-            continue;
-        if ('text' in node) {
-            s += node.text;
-        } else {
-            if (!disabled[node.tag.toLowerCase()])
-                s += `<${node.tag}${UnparseAttributes(node.tag, node.attributes)}>${UnparseXML(node.nodes, disabled)}</${node.tag}>`;
-        }
-    }
-    return s;
-}
 
-function UnparseAttributes(_tag: string, attributes?: { [key: string]: { key: string; value: string; type: string } }) {
-    let s = '';
-    if (!attributes) {
-        return s;
-    }
-    for (const key in attributes) {
-        s += ` ${key}=${JSON.stringify(attributes[key].value)}`;
-    }
-    return s;
-}
+
+// function UnparseXML(xml: XMLNode | XMLNode[] = null, disabled = { script: true, style: true }) {
+//     let s = '';
+//     if (!xml) {
+//         return s;
+//     }
+//     xml = Array.isArray(xml) ? xml : [xml];
+//     for (const node of xml) {
+//         if (!node)
+//             continue;
+//         if ('text' in node) {
+//             s += node.text;
+//         } else {
+//             if (!disabled[node.tag.toLowerCase()])
+//                 s += `<${node.tag}${UnparseAttributes(node.tag, node.attributes)}>${UnparseXML(node.nodes, disabled)}</${node.tag}>`;
+//         }
+//     }
+//     return s;
+// }
+
+// function UnparseAttributes(_tag: string, attributes?: { [key: string]: { key: string; value: string; type: string } }) {
+//     let s = '';
+//     if (!attributes) {
+//         return s;
+//     }
+//     for (const key in attributes) {
+//         s += ` ${key}=${JSON.stringify(attributes[key].value)}`;
+//     }
+//     return s;
+// }
 
 export function ParseSample(sample: string) {
     try {

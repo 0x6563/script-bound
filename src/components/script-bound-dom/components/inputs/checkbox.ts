@@ -1,18 +1,18 @@
-import type { DOMNodeLike } from "../../services/elements.ts";
+import type { DOMNodeLike, ElementNodeLike } from "../../services/elements.ts";
 import { Events } from "../../services/events.ts";
-import { InputComponent } from "../../services/types/input.ts";
+import { InputComponent } from "../input.ts";
 
 export class Checkbox extends InputComponent {
     private events: Events<{ value: boolean }> = new Events();
-    private input?: DOMNodeLike;
+    private input?: ElementNodeLike;
     connect(): DOMNodeLike[] {
-        this.input = this.component
+        this.input = this.controller
             .application
             .createNode(
                 'input',
                 {
                     type: 'checkbox',
-                    value: this.component.data.value
+                    value: this.controller.data.value
                 },
                 { change: (v) => this.events.emit({ value: v }) }
             );
