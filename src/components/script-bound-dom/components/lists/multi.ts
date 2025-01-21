@@ -5,7 +5,7 @@ import { ListComponent } from "../list.ts";
 export class Multi extends ListComponent {
     private attributes;
 
-    constructor(protected controller: any) {
+    constructor(protected controller) {
         super(controller);
         const { direction, wrap } = GetLayoutFlow(this.controller.config.settings);
         this.attributes = {

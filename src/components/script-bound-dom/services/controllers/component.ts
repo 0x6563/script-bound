@@ -1,89 +1,78 @@
 import type { ComponentAttributesDictionary, ComponentASTNode, ComponentSettings, ContainerComponentASTNode, ListComponentASTNode, ComponentsDictionary, ValueType } from '../types/types';
 import type { ApplicationController } from './application';
-import type { DOMNodeLike, ElementNodeLike } from '../elements';
+import { CreateCommentNode, type DOMNodeLike, type ElementNodeLike } from '../elements';
 import { DataController } from './data';
 import { AttributeController } from './attribute';
 import { ErrorBox } from '../../components/debugs/error';
 import type { InputComponent } from '../../components/input';
 
-export class ComponentController<T extends ComponentSettings = {}> {
-    config: ComponentASTNode<T>;
+export class ComponentController<T extends ComponentASTNode = ComponentASTNode, T2 extends ComponentSettings = {}> {
+    node: T;
     data: DataController;
     application: ApplicationController;
-    attributes: {
-        local: ComponentAttributesDictionary,
-        inherited: ComponentAttributesDictionary
-    } = {
-            local: {},
-            inherited: {}
-        };
+    attributes: ComponentAttributesDictionary = {};
+    additional: ComponentAttributesDictionary = {};
+    settings: AttributeController<T2>;
+
     private parent?: ComponentController;
     private subcomponents: ComponentController[] = [];
-    private owns: (DataController | AttributeController)[] = [];
+    private owns: DataController[] = [];
     private component: ValueType<ComponentsDictionary>;
     private componentInstance?: InstanceType<ComponentController['component']>;
 
     private elements?: DOMNodeLike[];
     private dataListener;
-    private state = { connected: false, enabled: false }
+    private state = {
+        connected: false,
+        enabled: false,
+        locked: false,
+        unlocked: false
+    }
 
 
-    constructor(parameters: ComponentControllerConstructor<T>) {
+    constructor(parameters: ComponentControllerConstructor) {
         let addListener = false;
-        let inherited: ComponentAttributesDictionary;
         if ('parent' in parameters) {
             this.parent = parameters.parent;
             this.data = this.parent.data;
             this.application = this.parent.application;
-            inherited = this.parent.attributes.inherited;
         } else {
             this.data = parameters.data;
             this.application = parameters.application;
-            inherited = parameters.attributes;
         }
 
-        this.config = parameters.config;
-        if (this.config.attributes) {
-            if (this.config.attributes.bind) {
-                this.data = this.data.fork(this.config.attributes);
+        this.node = parameters.node as T;
+        if (this.node.attributes) {
+            if (this.node.attributes.bind) {
+                this.attributes.bind = new AttributeController<string>({
+                    data: this.data,
+                    attribute: this.node.attributes.bind,
+                });
 
+                this.data = this.data.fork(this.attributes.bind.value);
                 this.owns.push(this.data);
+                addListener = true;
             }
 
-            for (const k in inherited) {
-                const key = k as keyof ComponentAttributesDictionary;
-                if (typeof this.config.attributes[key] != 'undefined') {
-                    const attr = inherited[key]!.fork({ data: this.data, condition: parameters.config[key] });
-                    this.attributes.inherited[key] = attr;
-                    this.owns.push(attr);
-                    addListener = true;
+            for (const key in this.node.attributes) {
+                if (key !== 'bind') {
+                    this.attributes[key] = new AttributeController({ data: this.data, attribute: this.node.attributes[key] });
                 }
             }
 
-            if (typeof this.config.attributes.if != 'undefined') {
-                this.attributes.local.if = new AttributeController({
-                    application: this.application,
-                    data: this.data,
-                    condition: this.config.attributes.if,
-                    attribute: 'show',
-                    lockingCondition: false
-                });
-                this.owns.push(this.attributes.local.if);
-                addListener = true;
-            }
         }
+        if ('additional' in this.node) {
+            for (const key in this.node.additional) {
+                this.additional[key] = new AttributeController({ data: this.data, attribute: this.node.additional[key] });
+            }
 
-        this.attributes.local.if = this.attributes.local.if || new AttributeController({
-            application: this.application,
-            data: this.data,
-            condition: true,
-            attribute: 'show',
-            lockingCondition: false
-        });
+        }
+        this.settings = new AttributeController({ data: this.data, attribute: this.node.settings });
 
-        this.attributes.local.if?.checkState();
 
-        this.component = this.application.getComponent(this.config);
+        this.attributes.if = this.attributes.if || new AttributeController({ data: this.data, attribute: { type: 'json', value: true } });
+
+        this.component = this.application.getComponent(this.node);
 
         if (this.component.Type == 'input') {
             addListener = true;
@@ -113,7 +102,7 @@ export class ComponentController<T extends ComponentSettings = {}> {
 
     private render() {
         try {
-            if (this.attributes.local.if?.value) {
+            if (this.attributes.if!.value) {
                 this.enable();
                 this.elements = this.componentInstance?.connect(this.subcomponents as []) as DOMNodeLike[];
             } else {
@@ -123,16 +112,16 @@ export class ComponentController<T extends ComponentSettings = {}> {
             return this.elements;
         } catch (error) {
             console.error(error);
-            return ErrorBox(this.application, (error as string) + `<br/><br/><br/>` + JSON.stringify(this.config, null, 2));
+            return ErrorBox(this.application, (error as string) + `<br/><br/><br/>` + JSON.stringify(this.node, null, 2));
         }
     }
     private onDataChanges() {
         if (!this.state.connected)
             return;
 
-        if (this.attributes.local.if) {
-            this.attributes.local.if.checkState();
-            const enable = this.attributes.local.if.value;
+        if (this.attributes.if) {
+            this.attributes.if.recheck();
+            const enable = this.attributes.if.value;
             if (enable != this.state.enabled) {
                 const old = this.elements as DOMNodeLike[];
                 this.render();
@@ -160,15 +149,15 @@ export class ComponentController<T extends ComponentSettings = {}> {
         this.state.enabled = true;
         this.componentInstance = new this.component(this as any);
         if (this.component.Type == 'container') {
-            this.subcomponents = (this.config as ContainerComponentASTNode).content.map(v => this.component.Controller({ parent: this, config: v }));
+            this.subcomponents = (this.node as ContainerComponentASTNode).content.map(v => this.component.Controller({ parent: this, node: v }));
         } else if (this.component.Type == 'html') {
-            this.subcomponents = (this.config as ContainerComponentASTNode).content.map(v => this.component.Controller({ parent: this, config: v }));
+            this.subcomponents = (this.node as ContainerComponentASTNode).content.map(v => this.component.Controller({ parent: this, node: v }));
         } else if (this.component.Type == 'list') {
-            const config = (this.config as ListComponentASTNode);
+            const config = (this.node as ListComponentASTNode);
             if (Array.isArray(this.data.value)) {
-                this.subcomponents = this.data.value.map((_, bind) => this.component.Controller({ parent: this, config: { ...config.template, attributes: { ...config.template?.attributes, bind: bind.toString() } } as any }));
+                this.subcomponents = this.data.value.map((_, bind) => this.component.Controller({ parent: this, node: { ...config.template, attributes: { ...config.template?.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
             } else if (typeof this.data.value == 'object') {
-                this.subcomponents = Object.keys(this.data.value).map((bind) => this.component.Controller({ parent: this, config: { ...config.template, attributes: { ...config.template?.attributes, bind: bind.toString() } } as any }));
+                this.subcomponents = Object.keys(this.data.value).map((bind) => this.component.Controller({ parent: this, node: { ...config.template, attributes: { ...config.template?.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
             }
         } else if (this.component.Type == 'input') {
             (this.componentInstance as InputComponent).listen('change', ({ value }) => { this.data.value = value });
@@ -191,20 +180,20 @@ export class ComponentController<T extends ComponentSettings = {}> {
     }
 
     private placeholder() {
-        return document.createComment('') as any as DOMNodeLike;
+        return this.application.createComment('');
     }
 }
 
-export type ComponentControllerConstructor<T extends ComponentSettings = {}> =
+export type ComponentControllerConstructor<T extends ComponentASTNode = ComponentASTNode> =
     ComponentControllerContext<T> |
     {
         parent: ComponentController;
-        config: ComponentASTNode<T>;
+        node: ComponentASTNode;
     };
 
-export interface ComponentControllerContext<T extends ComponentSettings = {}> {
+export interface ComponentControllerContext<T extends ComponentASTNode> {
     application: ApplicationController;
     attributes: ComponentAttributesDictionary;
     data: DataController;
-    config: ComponentASTNode<T>;
+    node: T;
 }

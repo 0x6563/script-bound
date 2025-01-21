@@ -17,9 +17,9 @@
         <input if=($ == "Jane") type="text" bind="$.firstName" settings={ "label": "First Name" }/>
         <input type="text" bind="$.lastName" settings={ "label": "Last Name" } />
     </container>
-    <html>
+    <div>
         Phone numbers 
-    </html>
+    </div>
     <list type="tabs" settings={"side":"left"} bind="$.contact">
         <container>
             <html bind="@path" />
@@ -27,9 +27,9 @@
             <input type="text" bind="$.phoneNumber" />
         </container>
     </list>
-    <html>
+    <div>
         Phone numbers but filtered for mobile only
-    </html>
+    </div>
     <list type="tabs" settings={"side":"top"} bind="$.contact">
         <container if=($.type == "mobile" )>
             <html bind="@path" />

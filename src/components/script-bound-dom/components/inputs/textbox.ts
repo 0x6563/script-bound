@@ -23,7 +23,7 @@ export class Textbox extends InputComponent<{ label: string }> {
         container.appendChild(this.input);
 
         const text = this.controller.application.createNode('div', { 'data-bound-label': '' });
-        text.innerHTML = this.controller.config.settings?.label || '&nbsp;';
+        text.innerHTML = this.controller.settings?.value?.label || '&nbsp;';
         container.appendChild(text);
         return [container];
     }

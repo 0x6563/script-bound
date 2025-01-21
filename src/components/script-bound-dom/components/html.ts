@@ -5,15 +5,14 @@ import type { ComponentSettings, HTMLElementASTNode } from "../services/types/ty
 export class HTMLElementComponent<T extends ComponentSettings = {}> {
     static Type: 'html' = 'html';
 
-    static Controller<T extends ComponentSettings>(config: ComponentControllerConstructor<T>): ComponentController<T> {
-        return new ComponentController(config);
-    }
-
-    constructor(protected controller: { config: HTMLElementASTNode<T> } & ComponentController<T>) { };
-
+    constructor(protected controller: ComponentController<HTMLElementASTNode, T>) { };
 
     connect(subcomponents: ComponentController[]): DOMNodeLike[] {
-        const container = this.controller.application.createNode(this.controller.config.tag, { ...this.controller.config.custom as any });
+        const attributes = {};
+        for (const key in this.controller.additional) {
+            attributes[key] = this.controller.additional[key].value;
+        }
+        const container = this.controller.application.createNode(this.controller.node.tag, attributes);
         for (const component of subcomponents) {
             const doms = component.connect();
             for (const dom of doms) {
@@ -23,4 +22,7 @@ export class HTMLElementComponent<T extends ComponentSettings = {}> {
         return [container];
     }
     disconnect(): void { };
+
+
+    static Controller(config: ComponentControllerConstructor<HTMLElementASTNode>): ComponentController<HTMLElementASTNode> { return new ComponentController(config) }
 }

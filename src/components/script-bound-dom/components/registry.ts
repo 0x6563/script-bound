@@ -8,6 +8,7 @@ import { Flow } from "./containers/flow.ts";
 import { DebugDump } from "./debugs/dump.ts";
 import { DebugError } from "./debugs/error.ts";
 import type { ComponentsDictionary } from '../services/types/types.ts';
+import { Virtual } from './containers/virtual.ts';
 
 export const ComponentsByName: ComponentsDictionary = {
     textbox: Textbox as any,
@@ -19,6 +20,7 @@ export const ComponentsByName: ComponentsDictionary = {
     html: Html as any,
     flow: Flow as any,
     dump: DebugDump as any,
-    error: DebugError as any
+    error: DebugError as any,
+    virtual: Virtual as any
 }
 

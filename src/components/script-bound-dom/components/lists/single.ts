@@ -4,7 +4,7 @@ import { ListComponent } from "../list.ts";
 export class Single extends ListComponent {
     private attributes;
 
-    constructor(protected controller: any) {
+    constructor(protected controller) {
         super(controller);
         this.attributes = {
             'data-control': "list",

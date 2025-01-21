@@ -14,7 +14,7 @@
   "dependencies": {
     "grammar-well": "^2.0.1",
     "jsonpath-plus": "^10.2.0",
-    "moderate-code-interpreter": "^0.0.12",
+    "moderate-code-interpreter": "^0.0.13",
     "monaco-editor": "^0.52.2",
     "object-mutation-observer": "^2.0.5",
     "rxjs": "^7.8.1",

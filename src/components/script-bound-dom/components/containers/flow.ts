@@ -6,9 +6,9 @@ import type { LayoutFlow } from "../../services/types/types.ts";
 export class Flow extends ContainerComponent<LayoutFlow> {
     private attributes;
 
-    constructor(protected controller: ComponentController<LayoutFlow>) {
+    constructor(protected controller) {
         super(controller);
-        const { direction, wrap } = GetLayoutFlow(this.controller.config.settings);
+        const { direction, wrap } = GetLayoutFlow(this.controller.node.settings);
         this.attributes = {
             'data-flow': direction?.toString(),
             'data-wrap': wrap.toString(),
@@ -27,5 +27,4 @@ export class Flow extends ContainerComponent<LayoutFlow> {
         }
         return [container];
     }
-
 }

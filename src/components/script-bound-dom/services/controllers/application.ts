@@ -1,8 +1,8 @@
-import type { ComponentASTNode, ComponentsDictionary, ScriptBoundConfig, ValueType } from "../types/types";
+import type { ComponentASTNode, ComponentsDictionary, Runnable, ScriptBoundConfig, ValueType } from "../types/types";
 import { ObjectMutationObserver } from "object-mutation-observer";
 // import { ObjectMutationObserver, type ChangeCallback } from "object-mutation-observer";
 import { Run } from "moderate-code-interpreter";
-import { CreateElementNode, CreateTextNode, type ElementNodeLike, type TextNodeLike } from "../elements";
+import { CreateCommentNode, CreateElementNode, CreateTextNode, type ElementNodeLike, type TextNodeLike } from "../elements";
 import { ComponentsByName } from "../../components/registry";
 import { ExpressionComponent } from "../../components/expression";
 import { HTMLTextComponent } from "../../components/text";
@@ -12,7 +12,6 @@ type ChangeCallback = (e: any) => void;
 export class ApplicationController {
     observer: ObjectMutationObserver;
     data: any;
-    rules: { [key: string]: any } = {};
     private listeners: WeakMap<any, { main: ChangeCallback, listeners: Set<ChangeCallback> }> = new WeakMap();
     private components: ComponentsDictionary;
     constructor(
@@ -31,22 +30,8 @@ export class ApplicationController {
         this.data = this.observer.watch(data);
     }
 
-    test(data: any, rule?: string | boolean | object) {
-        if (typeof rule == 'undefined') {
-            return false;
-        }
-
-        if (typeof rule == 'boolean') {
-            return rule;
-        }
-
-        if (typeof rule == 'string') {
-            return RunTree(this.rules[rule], data);
-        }
-
-        if (typeof rule == 'object') {
-            return RunTree(rule, data);
-        }
+    runScript(data: any, script: Runnable) {
+        return RunTree(script, data);
     }
 
     createNode(type: string, attributes: { [key: string]: string | undefined | null } = {}, events: { [key: string]: (e: any) => void } = {}): ElementNodeLike {
@@ -62,6 +47,10 @@ export class ApplicationController {
 
     createText(text: string): TextNodeLike {
         return CreateTextNode(text);
+    }
+
+    createComment(comment: string): TextNodeLike {
+        return CreateCommentNode(comment);
     }
 
     watch(data: any, callback: ChangeCallback) {

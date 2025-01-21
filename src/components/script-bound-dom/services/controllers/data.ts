@@ -1,5 +1,5 @@
 import type { ApplicationController } from './application';
-import type { Bindable } from '../types/types';
+import type { Runnable } from '../types/types';
 import { GetValueType, Value } from 'moderate-code-interpreter';
 import { JSONPath } from 'jsonpath-plus';
 import { Events } from '../events';
@@ -33,7 +33,7 @@ export class DataController {
         }
     }
 
-    constructor({ application, meta, data, scopes, bind }: DataContextConfig) {
+    constructor({ application, meta, data, scopes, bind }: DataControllerConstructor) {
         this.$bind = bind;
         this.$data = data;
         this.scopes = { ...scopes, root: scopes?.root || this, relative: scopes?.relative || this }
@@ -53,15 +53,15 @@ export class DataController {
         this.scopes.parent?.children.delete(this);
     }
 
-    fork(config: Bindable) {
-        const view = PathResolver.IsMetaPath(config.bind) ? { data: this.$data, meta: this.meta } : { data: this.value };
+    fork(bind: string) {
+        const scope = PathResolver.IsMetaPath(bind) ? { data: this.$data, meta: this.meta } : { data: this.value };
         const context = new DataController({
-            ...view,
+            ...scope,
             scopes: {
                 ...this.scopes,
                 parent: this
             },
-            bind: config.bind,
+            bind: bind,
             application: this.application
         });
         this.children.add(context);
@@ -75,6 +75,10 @@ export class DataController {
         }
         r.$ = ValueProxy(this.value);
         return r;
+    }
+
+    runScript(script: Runnable) {
+        return this.application.runScript(this.proxy(), script);
     }
 
     private resolvePath(path: string = '$'): Result {
@@ -153,9 +157,10 @@ class PathResolver {
     }
 }
 
-export interface DataContextConfig extends Bindable {
+export interface DataControllerConstructor {
     application: ApplicationController;
     data: any;
+    bind?: string;
     scopes?: {
         [key: string]: DataController;
     }

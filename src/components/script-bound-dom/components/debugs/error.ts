@@ -12,7 +12,7 @@ export class DebugError extends OutputComponent {
         h1.innerHTML = 'Error';
 
         const pre = this.controller.application.createNode('pre');
-        pre.innerHTML = JSON.stringify(this.controller.config, null, 2);
+        pre.innerHTML = JSON.stringify(this.controller.node, null, 2);
 
         container.appendChild(pre);
         return [container];
@@ -22,7 +22,7 @@ export class DebugError extends OutputComponent {
 
 export function ErrorBox(application: ApplicationController, message: string) {
     const container = application.createNode('div');
-    container.setAttribute('style', 'color:red');
+    container.setAttribute('style', 'color:red; border:solid 2px red');
 
     const h1 = application.createNode('h1');
     container.appendChild(h1);

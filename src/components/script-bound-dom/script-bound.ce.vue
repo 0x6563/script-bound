@@ -13,22 +13,25 @@ interface ComponentProps {
 
 const props = defineProps<ComponentProps>();
 const container = ref<HTMLElement | null>(null);
+const styletag = ref<HTMLStyleElement>();
+
 const application = new ApplicationController(props.config, props.data);
 const data = new DataController({ application, data: application.data });
-
 onMounted(() => {
-  const lock = new AttributeController({ application, data, condition: false, attribute: 'lock', lockingCondition: true });
-  const component = new ComponentController({ application, data, config: props.config.layout[0], attributes: { lock } });
+  const lock = new AttributeController({ data, attribute: { type: 'json', value: false } });
+  const component = new ComponentController({ application, data, node: props.config.layout[0], attributes: { lock } });
   const doms = component.connect();
   for (const dom of doms) {
     container.value?.appendChild(dom as any)
   }
 
+  (styletag.value as any).innerHTML = props.config?.style;
 });
 </script>
 
 <template>
   <div data-bound-application ref="container" />
+  <component is="style" ref=styletag> </component>
 </template>
 
 <style lang="scss">

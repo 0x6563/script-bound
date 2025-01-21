@@ -486,9 +486,13 @@ class grammar {
                 Node: [
                     { name: "Node", postprocess: ({data}) => { return (data[0]); }, symbols: [ "Element" ] },
                     { name: "Node", postprocess: ({data}) => { return (data[0]); }, symbols: [ "Script" ] },
-                    { name: "Node", postprocess: ({data}) => { return ({ text: data[0].value }); }, symbols: [ { token: "text" } ] },
+                    { name: "Node", postprocess: ({data}) => { return ({ text: data[0].map(v=>v.value).join('') }); }, symbols: [ "Node.RPT1Nx1" ] },
                     { name: "Node", postprocess: ({data}) => { return (null); }, symbols: [ { literal: "<!--" }, { token: "text" }, { literal: "-->" } ] },
                     { name: "Node", postprocess: ({data}) => { return ({ literal: data[3] }); }, symbols: [ { literal: "<" }, { literal: "(" }, "_", "MC_Body", "_", { literal: ")" }, { literal: ">" } ] }
+                ],
+                "Node.RPT1Nx1": [
+                    { name: "Node.RPT1Nx1", symbols: [ { token: "text" } ] },
+                    { name: "Node.RPT1Nx1", postprocess: ({data}) => data[0].concat([data[1]]), symbols: [ "Node.RPT1Nx1", { token: "text" } ] }
                 ],
                 Number: [
                     { name: "Number", postprocess: ({data}) => { return (Number(data[0].value)); }, symbols: [ { token: "number" } ] }
@@ -549,6 +553,14 @@ class grammar {
         lexer: {
             start: "root",
             states: {
+                MC_dotescape: {
+                    regex: /(?:(?:((?:\.)))|(?:(\s+))|(?:([_a-zA-Z$][_a-zA-Z$\d]*)))/ym,
+                    rules: [
+                        { tag: ["l_dot"], when: "." },
+                        { tag: ["ws"], when: /\s+/ },
+                        { pop: 1, tag: ["word"], when: /[_a-zA-Z$][_a-zA-Z$\d]*/ }
+                    ]
+                },
                 MC_dqstring: {
                     regex: /(?:(?:(\\[\\\/bnrft]))|(?:(\\"))|(?:(\\u[A-Fa-f\d]{4}))|(?:(\\.))|(?:([^"\\]+))|(?:((?:"))))/ym,
                     rules: [
@@ -606,7 +618,7 @@ class grammar {
                     ]
                 },
                 MC_root: {
-                    regex: /(?:(?:(\@))|(?:(set(?![a-zA-Z])))|(?:(var(?![a-zA-Z])))|(?:(const(?![a-zA-Z])))|(?:(asc(?![a-zA-Z])))|(?:(desc(?![a-zA-Z])))|(?:(function(?![a-zA-Z])))|(?:(true(?![a-zA-Z])))|(?:(false(?![a-zA-Z])))|(?:(null(?![a-zA-Z])))|(?:(any(?![a-zA-Z])))|(?:(all(?![a-zA-Z])))|(?:(within(?![a-zA-Z])))|(?:(between(?![a-zA-Z])))|(?:(and(?![a-zA-Z])))|(?:(or(?![a-zA-Z])))|(?:(on(?![a-zA-Z])))|(?:(if(?![a-zA-Z])))|(?:(match(?![a-zA-Z])))|(?:(default(?![a-zA-Z])))|(?:(in(?![a-zA-Z])))|(?:(else(?![a-zA-Z])))|(?:(for(?![a-zA-Z])))|(?:(like(?![a-zA-Z])))|(?:(not(?![a-zA-Z])))|(?:(while(?![a-zA-Z])))|(?:(until(?![a-zA-Z])))|(?:(to(?![a-zA-Z])))|(?:(do(?![a-zA-Z])))|(?:(run(?![a-zA-Z])))|(?:(return(?![a-zA-Z])))|(?:(query(?![a-zA-Z])))|(?:(scan(?![a-zA-Z])))|(?:(segment(?![a-zA-Z])))|(?:(filter(?![a-zA-Z])))|(?:(sort(?![a-zA-Z])))|(?:(aggregate(?![a-zA-Z])))|(?:(cluster(?![a-zA-Z])))|(?:(list(?![a-zA-Z])))|(?:(first(?![a-zA-Z])))|(?:("))|(?:('))|(?:(\d+))|(?:([_a-zA-Z$][_a-zA-Z$\d]*))|(?:((?:=>)))|(?:((?:!=)))|(?:((?:==)))|(?:((?:>=)))|(?:((?:<=)))|(?:((?:\+=)))|(?:((?:\-=)))|(?:((?:\/=)))|(?:((?:%=)))|(?:((?:\*=)))|(?:((?:\.\.\.)))|(?:((?:\.\.)))|(?:((?:=)))|(?:((?:>)))|(?:((?:<)))|(?:((?:\+)))|(?:((?:\-)))|(?:((?:\/)))|(?:((?:%)))|(?:((?:\*)))|(?:((?:\?)))|(?:((?:\^)))|(?:((?:;)))|(?:((?::)))|(?:((?:!)))|(?:((?:\.)))|(?:((?:,)))|(?:((?:\()))|(?:((?:\))))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:(\s+)))/ym,
+                    regex: /(?:(?:(\@))|(?:(set(?![a-zA-Z])))|(?:(var(?![a-zA-Z])))|(?:(const(?![a-zA-Z])))|(?:(asc(?![a-zA-Z])))|(?:(desc(?![a-zA-Z])))|(?:(function(?![a-zA-Z])))|(?:(true(?![a-zA-Z])))|(?:(false(?![a-zA-Z])))|(?:(null(?![a-zA-Z])))|(?:(any(?![a-zA-Z])))|(?:(all(?![a-zA-Z])))|(?:(within(?![a-zA-Z])))|(?:(between(?![a-zA-Z])))|(?:(and(?![a-zA-Z])))|(?:(or(?![a-zA-Z])))|(?:(on(?![a-zA-Z])))|(?:(if(?![a-zA-Z])))|(?:(match(?![a-zA-Z])))|(?:(default(?![a-zA-Z])))|(?:(in(?![a-zA-Z])))|(?:(else(?![a-zA-Z])))|(?:(for(?![a-zA-Z])))|(?:(like(?![a-zA-Z])))|(?:(not(?![a-zA-Z])))|(?:(while(?![a-zA-Z])))|(?:(until(?![a-zA-Z])))|(?:(to(?![a-zA-Z])))|(?:(do(?![a-zA-Z])))|(?:(run(?![a-zA-Z])))|(?:(return(?![a-zA-Z])))|(?:(query(?![a-zA-Z])))|(?:(scan(?![a-zA-Z])))|(?:(segment(?![a-zA-Z])))|(?:(filter(?![a-zA-Z])))|(?:(sort(?![a-zA-Z])))|(?:(aggregate(?![a-zA-Z])))|(?:(cluster(?![a-zA-Z])))|(?:(list(?![a-zA-Z])))|(?:(first(?![a-zA-Z])))|(?:("))|(?:('))|(?:(\d+))|(?:([_a-zA-Z$][_a-zA-Z$\d]*))|(?:((?:=>)))|(?:((?:!=)))|(?:((?:==)))|(?:((?:>=)))|(?:((?:<=)))|(?:((?:\+=)))|(?:((?:\-=)))|(?:((?:\/=)))|(?:((?:%=)))|(?:((?:\*=)))|(?:((?:\.\.\.)))|(?:((?:\.\.)))|(?:((?:=)))|(?:((?:>)))|(?:((?:<)))|(?:((?:\+)))|(?:((?:\-)))|(?:((?:\/)))|(?:((?:%)))|(?:((?:\*)))|(?:((?:\?)))|(?:((?:\^)))|(?:((?:;)))|(?:((?::)))|(?:((?:!)))|(?:(\.\s*[a-z][_a-zA-Z$][_a-zA-Z$\d]*))|(?:((?:\.)))|(?:((?:,)))|(?:((?:\()))|(?:((?:\))))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:(\s+)))/ym,
                     rules: [
                         { highlight: "keyword", tag: ["keyword"], when: /\@/ },
                         { highlight: "keyword", tag: ["keyword"], when: /set(?![a-zA-Z])/ },
@@ -677,6 +689,7 @@ class grammar {
                         { highlight: "keyword", tag: ["l_semi"], when: ";" },
                         { highlight: "keyword", tag: ["l_col"], when: ":" },
                         { highlight: "keyword", tag: ["l_exc"], when: "!" },
+                        { before: true, goto: "MC_dotescape", when: /\.\s*[a-z][_a-zA-Z$][_a-zA-Z$\d]*/ },
                         { tag: ["l_dot"], when: "." },
                         { highlight: "delimiter", tag: ["l_comma"], when: "," },
                         { highlight: "delimiter", inset: 1, tag: ["l_lparen"], when: "(" },
@@ -742,11 +755,10 @@ class grammar {
                     ]
                 },
                 headTag: {
-                    regex: /(?:(?:(script(?![a-z_A-Z\d\-:!])))|(?:(style(?![a-z_A-Z\d\-:!])))|(?:(output(?![a-z_A-Z\d\-:!])))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*)))/ym,
+                    regex: /(?:(?:(script(?![a-z_A-Z\d\-:!])))|(?:(style(?![a-z_A-Z\d\-:!])))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*)))/ym,
                     rules: [
                         { highlight: "tag", set: "scriptHeadTag", when: /script(?![a-z_A-Z\d\-:!])/ },
                         { highlight: "tag", set: "styleHeadTag", tag: ["word"], when: /style(?![a-z_A-Z\d\-:!])/ },
-                        { highlight: "tag", set: "outputHeadTag", tag: ["word"], when: /output(?![a-z_A-Z\d\-:!])/ },
                         { highlight: "tag", set: "stdHeadTag", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ }
                     ]
                 },
@@ -786,236 +798,6 @@ class grammar {
                         { highlight: "attribute.value", pop: 1, tag: ["dquote"], when: /"/ }
                     ]
                 },
-                outputBody: {
-                    regex: /(?:(?:((?:<\/output>))))/gm,
-                    rules: [
-                        { before: true, pop: 1, when: "</output>" }
-                    ],
-                    unmatched: { tag: ["text"] }
-                },
-                outputEmbedBody: {
-                    regex: /(?:(?:((?:<\/output>))))/gm,
-                    rules: [
-                        { before: true, pop: 1, when: "</output>" }
-                    ],
-                    unmatched: { tag: ["text"] }
-                },
-                outputHeadHTMLTag: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
-                    rules: [
-                        { pop: 1, when: "/>" },
-                        { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
-                        { when: "=" },
-                        { goto: "MC_root", when: "(" },
-                        { tag: ["space"], when: /\s+/ },
-                        { highlight: "number", tag: ["number"], when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ },
-                        { goto: "json_string", highlight: "attribute.value", tag: ["dquote"], when: /"/ },
-                        { inset: 1, when: "{" },
-                        { pop: 1, when: "}" },
-                        { inset: 1, when: "[" },
-                        { pop: 1, when: "]" },
-                        { when: "," },
-                        { when: ":" },
-                        { highlight: "keyword", when: "true" },
-                        { highlight: "keyword", when: "false" },
-                        { highlight: "keyword", when: "null" },
-                        { set: "outputEmbedBody", when: ">" }
-                    ]
-                },
-                outputHeadJSONBody: {
-                    regex: /(?:(?:((?:<\/output>)))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null))))/ym,
-                    rules: [
-                        { before: true, pop: 1, when: "</output>" },
-                        { tag: ["space"], when: /\s+/ },
-                        { highlight: "number", tag: ["number"], when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ },
-                        { goto: "json_string", highlight: "attribute.value", tag: ["dquote"], when: /"/ },
-                        { inset: 1, when: "{" },
-                        { pop: 1, when: "}" },
-                        { inset: 1, when: "[" },
-                        { pop: 1, when: "]" },
-                        { when: "," },
-                        { when: ":" },
-                        { highlight: "keyword", when: "true" },
-                        { highlight: "keyword", when: "false" },
-                        { highlight: "keyword", when: "null" }
-                    ]
-                },
-                outputHeadJSONTag: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
-                    rules: [
-                        { pop: 1, when: "/>" },
-                        { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
-                        { when: "=" },
-                        { goto: "MC_root", when: "(" },
-                        { tag: ["space"], when: /\s+/ },
-                        { highlight: "number", tag: ["number"], when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ },
-                        { goto: "json_string", highlight: "attribute.value", tag: ["dquote"], when: /"/ },
-                        { inset: 1, when: "{" },
-                        { pop: 1, when: "}" },
-                        { inset: 1, when: "[" },
-                        { pop: 1, when: "]" },
-                        { when: "," },
-                        { when: ":" },
-                        { highlight: "keyword", when: "true" },
-                        { highlight: "keyword", when: "false" },
-                        { highlight: "keyword", when: "null" },
-                        { set: "outputHeadJSONBody", when: ">" }
-                    ]
-                },
-                outputHeadScriptTag: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
-                    rules: [
-                        { pop: 1, when: "/>" },
-                        { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
-                        { when: "=" },
-                        { goto: "MC_root", when: "(" },
-                        { tag: ["space"], when: /\s+/ },
-                        { highlight: "number", tag: ["number"], when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ },
-                        { goto: "json_string", highlight: "attribute.value", tag: ["dquote"], when: /"/ },
-                        { inset: 1, when: "{" },
-                        { pop: 1, when: "}" },
-                        { inset: 1, when: "[" },
-                        { pop: 1, when: "]" },
-                        { when: "," },
-                        { when: ":" },
-                        { highlight: "keyword", when: "true" },
-                        { highlight: "keyword", when: "false" },
-                        { highlight: "keyword", when: "null" },
-                        { set: "outputScriptBody", when: ">" }
-                    ]
-                },
-                outputHeadTag: {
-                    regex: /(?:(?:(content\s*=\s*"html"))|(?:(content\s*=\s*"json"))|(?:(content\s*=\s*"xml"))|(?:(content\s*=\s*"script"))|(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
-                    rules: [
-                        { before: true, set: "outputHeadHTMLTag", when: /content\s*=\s*"html"/ },
-                        { before: true, set: "outputHeadJSONTag", when: /content\s*=\s*"json"/ },
-                        { before: true, set: "outputHeadXMLTag", when: /content\s*=\s*"xml"/ },
-                        { before: true, set: "outputHeadScriptTag", when: /content\s*=\s*"script"/ },
-                        { pop: 1, when: "/>" },
-                        { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
-                        { when: "=" },
-                        { goto: "MC_root", when: "(" },
-                        { tag: ["space"], when: /\s+/ },
-                        { highlight: "number", tag: ["number"], when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ },
-                        { goto: "json_string", highlight: "attribute.value", tag: ["dquote"], when: /"/ },
-                        { inset: 1, when: "{" },
-                        { pop: 1, when: "}" },
-                        { inset: 1, when: "[" },
-                        { pop: 1, when: "]" },
-                        { when: "," },
-                        { when: ":" },
-                        { highlight: "keyword", when: "true" },
-                        { highlight: "keyword", when: "false" },
-                        { highlight: "keyword", when: "null" },
-                        { set: "outputBody", when: ">" }
-                    ]
-                },
-                outputHeadXMLTag: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
-                    rules: [
-                        { pop: 1, when: "/>" },
-                        { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
-                        { when: "=" },
-                        { goto: "MC_root", when: "(" },
-                        { tag: ["space"], when: /\s+/ },
-                        { highlight: "number", tag: ["number"], when: /-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b/ },
-                        { goto: "json_string", highlight: "attribute.value", tag: ["dquote"], when: /"/ },
-                        { inset: 1, when: "{" },
-                        { pop: 1, when: "}" },
-                        { inset: 1, when: "[" },
-                        { pop: 1, when: "]" },
-                        { when: "," },
-                        { when: ":" },
-                        { highlight: "keyword", when: "true" },
-                        { highlight: "keyword", when: "false" },
-                        { highlight: "keyword", when: "null" },
-                        { set: "outputEmbedBody", when: ">" }
-                    ]
-                },
-                outputScriptBody: {
-                    regex: /(?:(?:((?:<\/output>)))|(?:(\@))|(?:(set(?![a-zA-Z])))|(?:(var(?![a-zA-Z])))|(?:(const(?![a-zA-Z])))|(?:(asc(?![a-zA-Z])))|(?:(desc(?![a-zA-Z])))|(?:(function(?![a-zA-Z])))|(?:(true(?![a-zA-Z])))|(?:(false(?![a-zA-Z])))|(?:(null(?![a-zA-Z])))|(?:(any(?![a-zA-Z])))|(?:(all(?![a-zA-Z])))|(?:(within(?![a-zA-Z])))|(?:(between(?![a-zA-Z])))|(?:(and(?![a-zA-Z])))|(?:(or(?![a-zA-Z])))|(?:(on(?![a-zA-Z])))|(?:(if(?![a-zA-Z])))|(?:(match(?![a-zA-Z])))|(?:(default(?![a-zA-Z])))|(?:(in(?![a-zA-Z])))|(?:(else(?![a-zA-Z])))|(?:(for(?![a-zA-Z])))|(?:(like(?![a-zA-Z])))|(?:(not(?![a-zA-Z])))|(?:(while(?![a-zA-Z])))|(?:(until(?![a-zA-Z])))|(?:(to(?![a-zA-Z])))|(?:(do(?![a-zA-Z])))|(?:(run(?![a-zA-Z])))|(?:(return(?![a-zA-Z])))|(?:(query(?![a-zA-Z])))|(?:(scan(?![a-zA-Z])))|(?:(segment(?![a-zA-Z])))|(?:(filter(?![a-zA-Z])))|(?:(sort(?![a-zA-Z])))|(?:(aggregate(?![a-zA-Z])))|(?:(cluster(?![a-zA-Z])))|(?:(list(?![a-zA-Z])))|(?:(first(?![a-zA-Z])))|(?:("))|(?:('))|(?:(\d+))|(?:([_a-zA-Z$][_a-zA-Z$\d]*))|(?:((?:=>)))|(?:((?:!=)))|(?:((?:==)))|(?:((?:>=)))|(?:((?:<=)))|(?:((?:\+=)))|(?:((?:\-=)))|(?:((?:\/=)))|(?:((?:%=)))|(?:((?:\*=)))|(?:((?:\.\.\.)))|(?:((?:\.\.)))|(?:((?:=)))|(?:((?:>)))|(?:((?:<)))|(?:((?:\+)))|(?:((?:\-)))|(?:((?:\/)))|(?:((?:%)))|(?:((?:\*)))|(?:((?:\?)))|(?:((?:\^)))|(?:((?:;)))|(?:((?::)))|(?:((?:!)))|(?:((?:\.)))|(?:((?:,)))|(?:((?:\()))|(?:((?:\))))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:(\s+)))/ym,
-                    rules: [
-                        { before: true, pop: 1, when: "</output>" },
-                        { highlight: "keyword", tag: ["keyword"], when: /\@/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /set(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /var(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /const(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /asc(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /desc(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /function(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /true(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /false(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /null(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword","word"], when: /any(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword","word"], when: /all(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword","word"], when: /within(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword","word"], when: /between(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /and(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /or(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /on(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /if(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /match(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /default(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /in(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /else(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /for(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /like(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /not(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /while(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /until(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /to(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /do(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /run(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /return(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /query(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /scan(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /segment(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /filter(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /sort(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /aggregate(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /cluster(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /list(?![a-zA-Z])/ },
-                        { highlight: "keyword", tag: ["keyword"], when: /first(?![a-zA-Z])/ },
-                        { goto: "MC_dqstring", highlight: "string", tag: ["dquote"], when: /"/ },
-                        { goto: "MC_sqstring", highlight: "string", tag: ["squote"], when: /'/ },
-                        { highlight: "number", tag: ["digits"], when: /\d+/ },
-                        { tag: ["word"], when: /[_a-zA-Z$][_a-zA-Z$\d]*/ },
-                        { highlight: "keyword", tag: ["l_arrow"], when: "=>" },
-                        { highlight: "keyword", tag: ["l_arrow"], when: "!=" },
-                        { highlight: "keyword", tag: ["l_eqeq"], when: "==" },
-                        { highlight: "keyword", tag: ["l_gteq"], when: ">=" },
-                        { highlight: "keyword", tag: ["l_lteq"], when: "<=" },
-                        { highlight: "keyword", tag: ["l_add"], when: "+=" },
-                        { highlight: "keyword", tag: ["l_sub"], when: "-=" },
-                        { highlight: "keyword", tag: ["l_div"], when: "/=" },
-                        { highlight: "keyword", tag: ["l_mod"], when: "%=" },
-                        { highlight: "keyword", tag: ["l_mul"], when: "*=" },
-                        { highlight: "keyword", tag: ["l_spread"], when: "..." },
-                        { highlight: "keyword", tag: ["l_concat"], when: ".." },
-                        { tag: ["l_eq"], when: "=" },
-                        { highlight: "keyword", tag: ["l_gt"], when: ">" },
-                        { highlight: "keyword", tag: ["l_lt"], when: "<" },
-                        { highlight: "keyword", tag: ["l_add"], when: "+" },
-                        { highlight: "keyword", tag: ["l_sub"], when: "-" },
-                        { highlight: "keyword", tag: ["l_div"], when: "/" },
-                        { highlight: "keyword", tag: ["l_mod"], when: "%" },
-                        { highlight: "keyword", tag: ["l_mul"], when: "*" },
-                        { highlight: "keyword", tag: ["l_qmark"], when: "?" },
-                        { highlight: "keyword", tag: ["l_exp"], when: "^" },
-                        { highlight: "keyword", tag: ["l_semi"], when: ";" },
-                        { highlight: "keyword", tag: ["l_col"], when: ":" },
-                        { highlight: "keyword", tag: ["l_exc"], when: "!" },
-                        { tag: ["l_dot"], when: "." },
-                        { highlight: "delimiter", tag: ["l_comma"], when: "," },
-                        { highlight: "delimiter", inset: 1, tag: ["l_lparen"], when: "(" },
-                        { highlight: "delimiter", pop: 1, tag: ["l_rparen"], when: ")" },
-                        { highlight: "delimiter", inset: 1, tag: ["l_lcurly"], when: "{" },
-                        { highlight: "delimiter", pop: 1, tag: ["l_rcurly"], when: "}" },
-                        { highlight: "delimiter", inset: 1, tag: ["l_lbrack"], when: "[" },
-                        { highlight: "delimiter", pop: 1, tag: ["l_rbrack"], when: "]" },
-                        { tag: ["ws"], when: /\s+/ }
-                    ]
-                },
                 root: {
                     regex: /(?:(?:((?:<!\-\-)))|(?:(<\())|(?:(<\/))|(?:(<))|(?:([^<]+)))/ym,
                     rules: [
@@ -1027,7 +809,7 @@ class grammar {
                     ]
                 },
                 scriptBody: {
-                    regex: /(?:(?:((?:<\/script>)))|(?:(\@))|(?:(set(?![a-zA-Z])))|(?:(var(?![a-zA-Z])))|(?:(const(?![a-zA-Z])))|(?:(asc(?![a-zA-Z])))|(?:(desc(?![a-zA-Z])))|(?:(function(?![a-zA-Z])))|(?:(true(?![a-zA-Z])))|(?:(false(?![a-zA-Z])))|(?:(null(?![a-zA-Z])))|(?:(any(?![a-zA-Z])))|(?:(all(?![a-zA-Z])))|(?:(within(?![a-zA-Z])))|(?:(between(?![a-zA-Z])))|(?:(and(?![a-zA-Z])))|(?:(or(?![a-zA-Z])))|(?:(on(?![a-zA-Z])))|(?:(if(?![a-zA-Z])))|(?:(match(?![a-zA-Z])))|(?:(default(?![a-zA-Z])))|(?:(in(?![a-zA-Z])))|(?:(else(?![a-zA-Z])))|(?:(for(?![a-zA-Z])))|(?:(like(?![a-zA-Z])))|(?:(not(?![a-zA-Z])))|(?:(while(?![a-zA-Z])))|(?:(until(?![a-zA-Z])))|(?:(to(?![a-zA-Z])))|(?:(do(?![a-zA-Z])))|(?:(run(?![a-zA-Z])))|(?:(return(?![a-zA-Z])))|(?:(query(?![a-zA-Z])))|(?:(scan(?![a-zA-Z])))|(?:(segment(?![a-zA-Z])))|(?:(filter(?![a-zA-Z])))|(?:(sort(?![a-zA-Z])))|(?:(aggregate(?![a-zA-Z])))|(?:(cluster(?![a-zA-Z])))|(?:(list(?![a-zA-Z])))|(?:(first(?![a-zA-Z])))|(?:("))|(?:('))|(?:(\d+))|(?:([_a-zA-Z$][_a-zA-Z$\d]*))|(?:((?:=>)))|(?:((?:!=)))|(?:((?:==)))|(?:((?:>=)))|(?:((?:<=)))|(?:((?:\+=)))|(?:((?:\-=)))|(?:((?:\/=)))|(?:((?:%=)))|(?:((?:\*=)))|(?:((?:\.\.\.)))|(?:((?:\.\.)))|(?:((?:=)))|(?:((?:>)))|(?:((?:<)))|(?:((?:\+)))|(?:((?:\-)))|(?:((?:\/)))|(?:((?:%)))|(?:((?:\*)))|(?:((?:\?)))|(?:((?:\^)))|(?:((?:;)))|(?:((?::)))|(?:((?:!)))|(?:((?:\.)))|(?:((?:,)))|(?:((?:\()))|(?:((?:\))))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:(\s+)))/ym,
+                    regex: /(?:(?:((?:<\/script>)))|(?:(\@))|(?:(set(?![a-zA-Z])))|(?:(var(?![a-zA-Z])))|(?:(const(?![a-zA-Z])))|(?:(asc(?![a-zA-Z])))|(?:(desc(?![a-zA-Z])))|(?:(function(?![a-zA-Z])))|(?:(true(?![a-zA-Z])))|(?:(false(?![a-zA-Z])))|(?:(null(?![a-zA-Z])))|(?:(any(?![a-zA-Z])))|(?:(all(?![a-zA-Z])))|(?:(within(?![a-zA-Z])))|(?:(between(?![a-zA-Z])))|(?:(and(?![a-zA-Z])))|(?:(or(?![a-zA-Z])))|(?:(on(?![a-zA-Z])))|(?:(if(?![a-zA-Z])))|(?:(match(?![a-zA-Z])))|(?:(default(?![a-zA-Z])))|(?:(in(?![a-zA-Z])))|(?:(else(?![a-zA-Z])))|(?:(for(?![a-zA-Z])))|(?:(like(?![a-zA-Z])))|(?:(not(?![a-zA-Z])))|(?:(while(?![a-zA-Z])))|(?:(until(?![a-zA-Z])))|(?:(to(?![a-zA-Z])))|(?:(do(?![a-zA-Z])))|(?:(run(?![a-zA-Z])))|(?:(return(?![a-zA-Z])))|(?:(query(?![a-zA-Z])))|(?:(scan(?![a-zA-Z])))|(?:(segment(?![a-zA-Z])))|(?:(filter(?![a-zA-Z])))|(?:(sort(?![a-zA-Z])))|(?:(aggregate(?![a-zA-Z])))|(?:(cluster(?![a-zA-Z])))|(?:(list(?![a-zA-Z])))|(?:(first(?![a-zA-Z])))|(?:("))|(?:('))|(?:(\d+))|(?:([_a-zA-Z$][_a-zA-Z$\d]*))|(?:((?:=>)))|(?:((?:!=)))|(?:((?:==)))|(?:((?:>=)))|(?:((?:<=)))|(?:((?:\+=)))|(?:((?:\-=)))|(?:((?:\/=)))|(?:((?:%=)))|(?:((?:\*=)))|(?:((?:\.\.\.)))|(?:((?:\.\.)))|(?:((?:=)))|(?:((?:>)))|(?:((?:<)))|(?:((?:\+)))|(?:((?:\-)))|(?:((?:\/)))|(?:((?:%)))|(?:((?:\*)))|(?:((?:\?)))|(?:((?:\^)))|(?:((?:;)))|(?:((?::)))|(?:((?:!)))|(?:(\.\s*[a-z][_a-zA-Z$][_a-zA-Z$\d]*))|(?:((?:\.)))|(?:((?:,)))|(?:((?:\()))|(?:((?:\))))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:(\s+)))/ym,
                     rules: [
                         { before: true, pop: 1, when: "</script>" },
                         { highlight: "keyword", tag: ["keyword"], when: /\@/ },
@@ -1099,6 +881,7 @@ class grammar {
                         { highlight: "keyword", tag: ["l_semi"], when: ";" },
                         { highlight: "keyword", tag: ["l_col"], when: ":" },
                         { highlight: "keyword", tag: ["l_exc"], when: "!" },
+                        { before: true, goto: "MC_dotescape", when: /\.\s*[a-z][_a-zA-Z$][_a-zA-Z$\d]*/ },
                         { tag: ["l_dot"], when: "." },
                         { highlight: "delimiter", tag: ["l_comma"], when: "," },
                         { highlight: "delimiter", inset: 1, tag: ["l_lparen"], when: "(" },

@@ -11,17 +11,14 @@ import { ParseConfigString } from './components/script-bound-dom/services/config
 import './services/syntax-highlight';
 
 const $cinterval = new Subject<string>();
-const styletag = ref<HTMLStyleElement>();
 const state = reactive<{
-  config?: ScriptBoundConfig,
+  config?: any,
   data: any,
-  render: string,
-  editor: string;
+  render: string
 }>({
   config: undefined,
   data: SampleData,
-  render: 'Form',
-  editor: 'XML'
+  render: 'Form'
 })
 
 let configString = ref(SampleXML);
@@ -31,7 +28,6 @@ $cinterval.pipe(debounceTime(2000)).subscribe((value) => {
   state.config = undefined;
   setTimeout(() => {
     state.config = ParseConfigString(value);
-    (styletag.value as any).innerHTML = state.config?.style;
   }, 50)
 })
 
@@ -56,28 +52,26 @@ function OnChange() {
 
 <template>
   <div class="body flx">
-    <component is="style" ref=styletag> </component>
     <div class="flx">
       <div class="flx top-bottom">
-        <h1>
-          <Toggle :value="state.editor" :options="['XML', 'JSON']" @change="state.editor = $event" />
-        </h1>
-        <Code v-if="state.editor == 'XML'" :value=configString language="xmlplus" width="fill" height="fill"
-          @edit="configString = $event" />
-        <Code v-if="state.editor == 'JSON'" :value=state.config width="fill" height="fill" :readonly=true />
+        <h1>Editor</h1>
+        <Code :value=configString language="xmlplus" width="fill" height="fill" @edit="configString = $event" />
       </div>
     </div>
 
     <div class="flx top-bottom">
       <h1>
-        <Toggle :value="state.render" :options="['Form', 'JSON']" @change="state.render = $event" />
+        <Toggle :value="state.render" :options="['Form', 'Data', 'AST', 'CST']" @change="state.render = $event" />
       </h1>
-      <ScriptBound v-if="state.render == 'Form' && state.config" :data=state.data :config=state.config @change=OnChange />
-      <Code v-if="state.render == 'JSON'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />
+      <ScriptBound v-if="state.render == 'Form' && state.config?.ast" :data=state.data :config=state.config.ast
+        @change=OnChange />
+      <Code v-if="state.render == 'AST'" :value=state.config.ast width="fill" height="fill" :readonly=true />
+      <Code v-if="state.render == 'CST'" :value=state.config.cst width="fill" height="fill" :readonly=true />
+      <Code v-if="state.render == 'Data'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />
     </div>
   </div>
 </template>
 
 <style lang="scss">
 @use "./components/script-bound-dom/style.scss" as *;
-</style>./components/monaco.ce.vue./components/code.ce.vue
+</style>

@@ -14,7 +14,6 @@ lexer {
 	[headTag]
 		- when r:{script(?![a-z_A-Z\d\-:!])} highlight "tag" set scriptHeadTag
 		- when r:{style(?![a-z_A-Z\d\-:!])} tag "word" highlight "tag" set styleHeadTag
-		- when r:{output(?![a-z_A-Z\d\-:!])} tag "word" highlight "tag" set outputHeadTag
 		- when r:{[a-z_A-Z:!][a-z_A-Z\d\-:!]*} tag "word" highlight "tag" set stdHeadTag
 
 	[footTag]
@@ -53,46 +52,6 @@ lexer {
 	[styleBody]
         unmatched: tag "text";
 		- before "</style>" unembed pop
-
-	[outputHeadTag]
-		- before r:{content\s*=\s*"html"} set outputHeadHTMLTag
-		- before r:{content\s*=\s*"json"} set outputHeadJSONTag
-		- before r:{content\s*=\s*"xml"} set outputHeadXMLTag
-		- before r:{content\s*=\s*"script"} set outputHeadScriptTag
-		- import attributes
-		- when ">" set outputBody
-
-	[outputHeadScriptTag]
-		- import attributes
-		- when ">" set outputScriptBody
-
-	[outputScriptBody]
-		- before "</output>" pop
-		- import MC_root
-
-	[outputHeadHTMLTag]
-		- import attributes
-		- when ">" embed "text/html" set outputEmbedBody
-
-	[outputHeadXMLTag]
-		- import attributes
-		- when ">" embed "text/xml" set outputEmbedBody
-
-	[outputHeadJSONTag]
-		- import attributes
-		- when ">" set outputHeadJSONBody
-
-	[outputHeadJSONBody]
-		- before "</output>" pop
-		- import json
-
-	[outputBody]
-        unmatched: tag "text";
-		- before "</output>" pop
-
-	[outputEmbedBody]
-        unmatched: tag "text";
-		- before "</output>" unembed pop
 
 	[commentStart]
 		- when "<!--" tag "commentStart" goto commentEnd
@@ -135,7 +94,7 @@ grammar {
 	[Node] => ( $0 )
 		| Element
 		| Script
-		| <text> => ( { text: $0.value } )
+		| <text>+ => ( { text: $0.map(v => v.value).join('') } )
 		| "<!--" <text> "-->" => ( null )
 		| "<" "(" _ MC_Body@script _ ")" ">" => ( { literal: $script }  )
 

@@ -6,6 +6,10 @@ export function CreateTextNode(text: string): TextNodeLike {
     return document.createTextNode(text);
 }
 
+export function CreateCommentNode(comment: string): TextNodeLike {
+    return document.createComment(comment);
+}
+
 export class VirtualElement implements ElementNodeLike {
     innerHTML: string = '';
     parentNode: ElementNodeLike | null = null;

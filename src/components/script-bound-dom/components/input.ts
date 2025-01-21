@@ -5,7 +5,7 @@ import type { ComponentSettings, InputComponentASTNode } from "../services/types
 export abstract class InputComponent<T extends ComponentSettings = {}> {
     static Type: 'input' = 'input';
 
-    constructor(protected controller: { config: InputComponentASTNode<T> } & ComponentController<T>) { };
+    constructor(protected controller: ComponentController<InputComponentASTNode, T>) { };
 
     abstract connect(subcomponents?: []): DOMNodeLike[];
 
@@ -17,7 +17,5 @@ export abstract class InputComponent<T extends ComponentSettings = {}> {
 
     abstract unlisten(event: string, callback: (event?: any) => void): void;
 
-    static Controller<T extends ComponentSettings>(config: ComponentControllerConstructor<T>): ComponentController<T> {
-        return new ComponentController(config);
-    }
+    static Controller(config: ComponentControllerConstructor<InputComponentASTNode>): ComponentController<InputComponentASTNode> { return new ComponentController(config) }
 }

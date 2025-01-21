@@ -4,15 +4,16 @@ import { PickOne } from '../../services/utility.ts';
 import { ListComponent } from "../list.ts";
 
 const sides = new Set(['top', 'left', 'right', 'bottom', 'none']);
+
 export class Tabs extends ListComponent<{ side: PositionalSide }> {
     private attributes;
 
-    constructor(protected controller: { config: ListComponentASTNode<{ side: PositionalSide }> } & ComponentController) {
+    constructor(protected controller) {
         super(controller);
         this.attributes = {
             'data-control': "list",
             'data-component': "tabs",
-            'data-tab-side': PickOne(sides, this.controller.config.settings.side, 'top')
+            'data-tab-side': PickOne(sides, this.controller.node.settings.side, 'top')
         }
     }
 
@@ -34,7 +35,7 @@ export class Tabs extends ListComponent<{ side: PositionalSide }> {
             const component = subcomponents[i];
             const labelTab = this.controller.application.createNode('div');
             labelTab.setAttribute('data-element', 'label');
-            labelTab.innerHTML = component.data.bind as string;
+            labelTab.innerHTML = i.toString();
             labelTab.addEventListener('click', () => setActive(i));
             labelsContainer.appendChild(labelTab);
 
@@ -52,7 +53,7 @@ export class Tabs extends ListComponent<{ side: PositionalSide }> {
             items.push(viewportChild);
 
         }
-        setActive(subcomponents.findIndex(subcomponent => subcomponent.attributes.local.if?.value));
+        setActive(subcomponents.findIndex(subcomponent => subcomponent.attributes.if?.value));
 
         function setActive(active) {
             for (let i = 0; i < items.length; i++) {

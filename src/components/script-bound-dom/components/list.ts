@@ -5,13 +5,12 @@ import type { ComponentSettings, ListComponentASTNode } from "../services/types/
 export abstract class ListComponent<T extends ComponentSettings = {}> {
     static Type = 'list';
 
-    static Controller<T extends ComponentSettings>(config: ComponentControllerConstructor<T>): ComponentController {
-        return new ComponentController(config);
-    }
-
-    constructor(protected controller: { config: ListComponentASTNode<T> } & ComponentController<T>) { };
+    constructor(protected controller: ComponentController<ListComponentASTNode, T>) { };
 
     abstract connect(subcomponents: ComponentController[]): DOMNodeLike[];
 
     disconnect(): void { };
+
+    static Controller(config: ComponentControllerConstructor<ListComponentASTNode>): ComponentController<ListComponentASTNode> { return new ComponentController(config) }
+
 }
