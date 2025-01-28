@@ -1,10 +1,9 @@
-import type { ComponentAttributesDictionary, ComponentASTNode, ComponentSettings, ContainerComponentASTNode, ListComponentASTNode, ComponentsDictionary, ValueType } from '../types/types';
+import type { ComponentAttributesDictionary, ComponentASTNode, ComponentSettings, ListComponentASTNode, ComponentsDictionary, ValueType, Lifecycles } from '../types/types';
 import type { ApplicationController } from './application';
-import { CreateCommentNode, type DOMNodeLike, type ElementNodeLike } from '../elements';
+import type { BaseComponent } from '../../components/base';
+import type { DOMNodeLike, ElementNodeLike } from '../elements';
 import { DataController } from './data';
 import { AttributeController } from './attribute';
-import { ErrorBox } from '../../components/debugs/error';
-import type { InputComponent } from '../../components/input';
 
 export class ComponentController<T extends ComponentASTNode = ComponentASTNode, T2 extends ComponentSettings = {}> {
     node: T;
@@ -12,13 +11,16 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
     application: ApplicationController;
     attributes: ComponentAttributesDictionary = {};
     additional: ComponentAttributesDictionary = {};
-    settings: AttributeController<T2>;
+    get settings(): T2 {
+        return this.attributes.settings?.value
+    };
 
     private parent?: ComponentController;
     private subcomponents: ComponentController[] = [];
     private owns: DataController[] = [];
     private component: ValueType<ComponentsDictionary>;
     private componentInstance?: InstanceType<ComponentController['component']>;
+    private events: Lifecycles;
 
     private elements?: DOMNodeLike[];
     private dataListener;
@@ -42,6 +44,7 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         }
 
         this.node = parameters.node as T;
+        this.events = 'events' in this.node ? this.node.events : {};
         if (this.node.attributes) {
             if (this.node.attributes.bind) {
                 this.attributes.bind = new AttributeController<string>({
@@ -67,22 +70,18 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
             }
 
         }
-        this.settings = new AttributeController({ data: this.data, attribute: this.node.settings });
-
 
         this.attributes.if = this.attributes.if || new AttributeController({ data: this.data, attribute: { type: 'json', value: true } });
 
-        this.component = this.application.getComponent(this.node);
-
-        if (this.component.Type == 'input') {
-            addListener = true;
-        }
-
+        this.component = this.node.component;
+        addListener = addListener || this.node.type == 'expression';
         if (addListener) {
             this.dataListener = () => this.onDataChanges();
             this.data.changes.addEventListener(this.dataListener);
         }
 
+        if (this.events.load)
+            this.data.runScript(this.events.load)
     }
 
     connect(): DOMNodeLike[] {
@@ -98,6 +97,18 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         for (const owned of this.owns) {
             owned.disconnect();
         }
+    }
+
+    eventHandler(e: { event: string, value: any }) {
+        if (e.event == 'update') {
+            this.data.value = e.value;
+        }
+        if (e.event == 'action') {
+            if (this.events.action) {
+                this.data.runScript(this.events.action);
+            }
+        }
+
     }
 
     private render() {
@@ -139,31 +150,22 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         }
 
         if (this.state.enabled) {
-            if (this.component.Type == 'input') {
-                (this.componentInstance as InputComponent).update(this.data.value);
-            }
+            (this.componentInstance as BaseComponent).update('value', this.data.value);
         }
     }
 
     private enable() {
         this.state.enabled = true;
         this.componentInstance = new this.component(this as any);
-        if (this.component.Type == 'container') {
-            this.subcomponents = (this.node as ContainerComponentASTNode).content.map(v => this.component.Controller({ parent: this, node: v }));
-        } else if (this.component.Type == 'html') {
-            this.subcomponents = (this.node as ContainerComponentASTNode).content.map(v => this.component.Controller({ parent: this, node: v }));
-        } else if (this.component.Type == 'list') {
-            const config = (this.node as ListComponentASTNode);
+        if ((this.node as ListComponentASTNode).repeat) {
+            const content = (this.node as ListComponentASTNode).content;
             if (Array.isArray(this.data.value)) {
-                this.subcomponents = this.data.value.map((_, bind) => this.component.Controller({ parent: this, node: { ...config.template, attributes: { ...config.template?.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
+                this.subcomponents = this.data.value.map((_, bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
             } else if (typeof this.data.value == 'object') {
-                this.subcomponents = Object.keys(this.data.value).map((bind) => this.component.Controller({ parent: this, node: { ...config.template, attributes: { ...config.template?.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
+                this.subcomponents = Object.keys(this.data.value).map((bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
             }
-        } else if (this.component.Type == 'input') {
-            (this.componentInstance as InputComponent).listen('change', ({ value }) => { this.data.value = value });
-            this.subcomponents = [];
-        } else if (this.component.Type == 'output') {
-            this.subcomponents = [];
+        } else if ("content" in this.node && Array.isArray(this.node.content)) {
+            this.subcomponents = this.node.content.map(v => new ComponentController({ parent: this, node: v }));
         }
     }
 
@@ -173,15 +175,28 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         while (this.subcomponents.length) {
             this.subcomponents.pop()?.disconnect();
         }
-        if (this.component.Type == 'input') {
-            (this.componentInstance as InputComponent)?.unlisten('change', ({ value }) => { this.data.value = value });
-            this.subcomponents = [];
-        }
     }
 
     private placeholder() {
         return this.application.createComment('');
     }
+}
+
+
+
+export function ErrorBox(application: ApplicationController, message: string) {
+    const container = application.createNode('div');
+    container.setAttribute('style', 'color:red; border:solid 2px red');
+
+    const h1 = application.createNode('h1');
+    container.appendChild(h1);
+    h1.innerHTML = 'Error';
+
+    const pre = application.createNode('pre');
+    pre.innerHTML = message;
+
+    container.appendChild(pre);
+    return [container];
 }
 
 export type ComponentControllerConstructor<T extends ComponentASTNode = ComponentASTNode> =

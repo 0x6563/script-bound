@@ -1,6 +1,6 @@
 import type { ApplicationController } from './application';
 import type { Runnable } from '../types/types';
-import { GetValueType, Value } from 'moderate-code-interpreter';
+import { GetValueType, Unmarshal, Value } from 'moderate-code-interpreter';
 import { JSONPath } from 'jsonpath-plus';
 import { Events } from '../events';
 
@@ -78,7 +78,8 @@ export class DataController {
     }
 
     runScript(script: Runnable) {
-        return this.application.runScript(this.proxy(), script);
+        const o = this.proxy();
+        return this.application.runScript(o, script);
     }
 
     private resolvePath(path: string = '$'): Result {
@@ -130,6 +131,9 @@ function ObjectProxy(source: object | any[]) {
             if (typeof key == 'symbol')
                 return target[key];
             return ValueProxy(target[key])
+        },
+        set(target, key, value) {
+            return target[key] = Unmarshal(value);
         },
         ownKeys(target) {
             return Object.keys(target);

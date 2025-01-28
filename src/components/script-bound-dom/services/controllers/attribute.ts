@@ -1,5 +1,5 @@
 import type { DataController } from "./data";
-import type { AttributeValue, JSONLike } from "../types/types";
+import type { AttributeValue } from "../types/types";
 
 export class AttributeController<T = any> {
     private data: DataController;

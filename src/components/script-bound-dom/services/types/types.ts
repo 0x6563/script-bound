@@ -1,12 +1,9 @@
 import type { AttributeController } from "../controllers/attribute";
-import type { ComponentController, ComponentControllerConstructor } from "../controllers/component";
-import type { ContainerComponent } from "../../components/container";
-import type { InputComponent } from "../../components/input";
-import type { ListComponent } from "../../components/list";
-import type { OutputComponent } from "../../components/output";
+import type { BaseComponent } from "../../components/base";
 import type { ExpressionComponent } from "../../components/expression";
 import type { HTMLElementComponent } from "../../components/html";
 import type { HTMLTextComponent } from "../../components/text";
+import type { ComponentController, ComponentControllerConstructor } from "../controllers/component";
 import type { Expression, Statement } from "moderate-code-interpreter/dist/types";
 
 export interface ScriptBoundConfig {
@@ -16,11 +13,11 @@ export interface ScriptBoundConfig {
     components?: ComponentsDictionary;
 }
 
-export type ComponentASTNode = ContainerComponentASTNode | ListComponentASTNode | InputComponentASTNode | OutputComponentASTNode | ExpressionASTNode | TextASTNode | HTMLElementASTNode;
+export type ComponentASTNode = ListComponentASTNode | BaseComponentASTNode | ExpressionASTNode | TextASTNode | HTMLElementASTNode;
 
-export interface ContainerComponentASTNode {
-    type: 'container';
-    component: string;
+export interface BaseComponentASTNode {
+    type: 'base';
+    component: ComponentClass;
     attributes: NodeAttributes;
     events: Lifecycles;
     settings?: AttributeValue;
@@ -29,61 +26,49 @@ export interface ContainerComponentASTNode {
 
 export interface ListComponentASTNode {
     type: 'list';
-    component: string;
+    component: ComponentClass;
     attributes: NodeAttributes;
     events: Lifecycles;
     settings?: AttributeValue;
-    template: ComponentASTNode;
-}
-
-export interface InputComponentASTNode {
-    type: 'input';
-    component: string;
-    attributes: NodeAttributes;
-    events: Lifecycles;
-    settings?: AttributeValue;
-}
-
-export interface OutputComponentASTNode {
-    type: 'output';
-    component: string;
-    attributes: NodeAttributes;
-    events: Lifecycles;
-    settings?: AttributeValue;
-    content: ComponentASTNode[];
+    content: ComponentASTNode;
+    repeat: true;
 }
 
 export interface ExpressionASTNode {
     type: 'expression';
     attributes?: never;
-    expression: ScriptTree;
+    expression: Runnable;
     settings?: AttributeValue;
+    component: ComponentClass;
 }
 
 export interface HTMLElementASTNode {
     type: 'html';
     tag: string;
     attributes: NodeAttributes;
-    content: ComponentASTNode[];
     settings?: AttributeValue;
+    content: ComponentASTNode[];
     additional: NodeAttributes;
+    component: ComponentClass;
 }
 
 export interface TextASTNode {
     type: 'text';
-    content: string;
     attributes?: never;
     settings?: AttributeValue;
+    text: string;
+    component: ComponentClass;
 }
 
-export type NodeAttributes = Bindable & ConditionalEdit & ConditionalShow & QuerySelectors;
+export type NodeAttributes = Bindable & ConditionalEdit & ConditionalShow & QuerySelectors & Settings;
 
 export type ComponentSettings = {}
 
 export interface Lifecycles {
-    'load'?: ScriptTree;
-    'update'?: ScriptTree;
-    'unload'?: ScriptTree;
+    'load'?: Runnable;
+    'update'?: Runnable;
+    'action'?: Runnable;
+    'unload'?: Runnable;
 }
 
 export interface Bindable {
@@ -104,6 +89,10 @@ export interface QuerySelectors {
     class?: AttributeValue;
 }
 
+export interface Settings {
+    settings?: ComponentSettings;
+}
+
 export interface LayoutFlow {
     direction?: FlowDirection
     wrap?: boolean;
@@ -113,20 +102,29 @@ export interface LayoutFlow {
 export type FlowDirection = 'left-right' | 'right-left' | 'top-bottom' | 'bottom-top';
 export type PositionalSide = 'left' | 'right' | 'bottom' | 'top';
 
-export type Component = ContainerComponent | ListComponent | InputComponent | OutputComponent;
+export type Component = BaseComponent;
 export type ComponentAttributesDictionary = {
     [key in keyof NodeAttributes]: AttributeController;
 };
 
 export interface ComponentsDictionary {
-    [key: string]: {
-        Type: 'script' | 'style' | 'input' | 'output' | 'container' | 'list' | 'expression' | 'html' | 'text',
-        new(component: ComponentController<any>): InputComponent<any> | OutputComponent<any> | ListComponent<any> | ContainerComponent<any> | ExpressionComponent | HTMLElementComponent | HTMLTextComponent;
-        Controller<T extends ComponentASTNode = ComponentASTNode>(config: ComponentControllerConstructor<T>): ComponentController<T>;
-    };
+    [key: string]: ComponentClass;
+}
+
+export interface ComponentClass {
+    Attributes: {
+        group?: string;
+        default?: boolean;
+        repeat?: boolean;
+    }
+    new(component: ComponentController<any>): BaseComponent<any> | ExpressionComponent | HTMLElementComponent | HTMLTextComponent;
+}
+
+export interface ComponentRegistry {
+    byClass: { [key: string]: ComponentsDictionary }
+    byName: ComponentsDictionary;
 }
 export type ValueType<T> = T[keyof T]
-export type ScriptTree = any;
 
 export type AttributeValue = { type: 'json', value: JSONLike } | { type: 'script', value: Runnable };
 

@@ -1,8 +1,8 @@
 import type { ComponentController } from "../../services/controllers/component.ts";
 import type { DOMNodeLike } from "../../services/elements.ts";
-import { ContainerComponent } from "../container.ts";
+import { BaseComponent } from "../base.ts";
 
-export class Virtual extends ContainerComponent {
+export class Virtual extends BaseComponent {
 
     connect(subcomponents: ComponentController[]) {
         const container: DOMNodeLike[] = [];

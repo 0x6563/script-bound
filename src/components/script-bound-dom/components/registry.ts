@@ -1,3 +1,4 @@
+import type { ComponentsDictionary } from '../services/types/types.ts';
 import { Textbox } from './inputs/textbox.ts';
 import { Checkbox } from './inputs/checkbox.ts';
 import { Multi } from './lists/multi.ts';
@@ -7,8 +8,8 @@ import { Html } from './outputs/html.ts';
 import { Flow } from "./containers/flow.ts";
 import { DebugDump } from "./debugs/dump.ts";
 import { DebugError } from "./debugs/error.ts";
-import type { ComponentsDictionary } from '../services/types/types.ts';
 import { Virtual } from './containers/virtual.ts';
+import { Button } from './inputs/button.ts';
 
 export const ComponentsByName: ComponentsDictionary = {
     textbox: Textbox as any,
@@ -21,6 +22,7 @@ export const ComponentsByName: ComponentsDictionary = {
     flow: Flow as any,
     dump: DebugDump as any,
     error: DebugError as any,
+    button: Button as any,
     virtual: Virtual as any
 }
 

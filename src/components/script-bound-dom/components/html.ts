@@ -1,9 +1,12 @@
-import { ComponentController, type ComponentControllerConstructor } from "../services/controllers/component";
 import type { DOMNodeLike } from "../services/elements";
 import type { ComponentSettings, HTMLElementASTNode } from "../services/types/types";
+import { ComponentController, type ComponentControllerConstructor } from "../services/controllers/component";
 
 export class HTMLElementComponent<T extends ComponentSettings = {}> {
-    static Type: 'html' = 'html';
+    static Attributes = {
+        group: '',
+        repeat: false
+    }
 
     constructor(protected controller: ComponentController<HTMLElementASTNode, T>) { };
 
@@ -21,8 +24,6 @@ export class HTMLElementComponent<T extends ComponentSettings = {}> {
         }
         return [container];
     }
+
     disconnect(): void { };
-
-
-    static Controller(config: ComponentControllerConstructor<HTMLElementASTNode>): ComponentController<HTMLElementASTNode> { return new ComponentController(config) }
 }

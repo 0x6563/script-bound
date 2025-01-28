@@ -1,23 +1,23 @@
-import type { ListComponentASTNode, PositionalSide } from "../../services/types/types.ts";
+import type { PositionalSide } from "../../services/types/types.ts";
 import type { ComponentController } from "../../services/controllers/component.ts";
 import { PickOne } from '../../services/utility.ts';
-import { ListComponent } from "../list.ts";
+import { BaseComponent } from "../base.ts";
 
 const sides = new Set(['top', 'left', 'right', 'bottom', 'none']);
 
-export class Tabs extends ListComponent<{ side: PositionalSide }> {
+export class Tabs extends BaseComponent<{ side: PositionalSide }> {
+    static Attributes = {
+        group: 'list',
+        repeat: true
+    };
     private attributes;
 
-    constructor(protected controller) {
-        super(controller);
+    connect(subcomponents: ComponentController[]) {
         this.attributes = {
             'data-control': "list",
             'data-component': "tabs",
-            'data-tab-side': PickOne(sides, this.controller.node.settings.side, 'top')
+            'data-tab-side': PickOne(sides, this.controller.settings.side, 'top')
         }
-    }
-
-    connect(subcomponents: ComponentController[]) {
         const items: any[] = [];
         const labels: any[] = [];
 

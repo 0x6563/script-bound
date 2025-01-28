@@ -1,10 +1,32 @@
-import type { ContainerComponentASTNode, ScriptBoundConfig, InputComponentASTNode, ListComponentASTNode, OutputComponentASTNode, ComponentsDictionary, HTMLElementASTNode, AttributeValue } from "./types/types.js";
+import type { ScriptBoundConfig, BaseComponentASTNode, ListComponentASTNode, ComponentsDictionary, HTMLElementASTNode, AttributeValue, Runnable, ComponentRegistry, ComponentClass } from "./types/types.js";
 import { Parse } from 'grammar-well/parse';
 import grammar from './xml.js';
 import { ComponentsByName } from "../components/registry.js";
+import { ApplicationController } from "./controllers/application.js";
+import { HTMLElementComponent } from "../components/html.js";
+import { Virtual } from "../components/containers/virtual.js";
+import { HTMLTextComponent } from "../components/text.js";
+import { ExpressionComponent } from "../components/expression.js";
 
 export function ParseConfigString(input: string, components: ComponentsDictionary = {}): { cst: any, ast: ScriptBoundConfig } {
-    let c = { ...ComponentsByName, ...components }
+    const c = { ...ComponentsByName, ...components }
+    const registry: ComponentRegistry = {
+        byName: {},
+        byClass: {}
+    }
+
+    for (const key in c) {
+        registry.byName[key] = c[key]
+        if (c[key].Attributes.group) {
+            registry.byClass[c[key].Attributes.group] = registry.byClass[c[key].Attributes.group] || {};
+            registry.byClass[c[key].Attributes.group][key] = c[key];
+            if (c[key].Attributes.default) {
+                registry.byName[c[key].Attributes.group] = c[key];
+            }
+        }
+    }
+
+    console.log(registry)
     try {
         const parsed = ParseSample(input);
         if (parsed.error) {
@@ -13,73 +35,51 @@ export function ParseConfigString(input: string, components: ComponentsDictionar
         }
         const xml: XML = parsed.result;
         console.log(xml);
-        return { cst: xml, ast: ConvertXMLElements(xml.nodes, c) };
+        return { cst: xml, ast: ConvertXMLElements(xml.nodes, registry) };
     } catch (error) {
         console.log(error);
     }
     return { cst: {}, ast: { layout: [], events: {}, style: '' } };
 }
 
-function ConvertXMLElement(node: XMLNode, components: ComponentsDictionary): ScriptBoundConfig {
+function ConvertXMLElement(node: XMLNode, registry: ComponentRegistry): ScriptBoundConfig {
     const ImportRegistry = {
-        container(node: XMLElement, component: string = 'flow'): ScriptBoundConfig {
+        base(node: XMLElement, component: ComponentClass): ScriptBoundConfig {
             const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes, components);
-            const layout: ContainerComponentASTNode = {
+            const config = ConvertXMLElements(node.nodes, registry);
+            const input: BaseComponentASTNode = {
                 ...attributes,
-                type: 'container',
-                component: node.attributes.type?.value || component,
+                type: 'base',
+                component: component,
                 events: config.events,
                 content: config.layout,
             };
-            return { ...config, layout: [layout] };
+            return { events: {}, style: '', layout: [input] };
         },
-        list(node: XMLElement, component: string = 'multi'): ScriptBoundConfig {
+        list(node: XMLElement, component: ComponentClass): ScriptBoundConfig {
             const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes, components);
+            const config = ConvertXMLElements(node.nodes, registry);
             if (config.layout.length > 1) {
-                if (config.layout[0].type == 'text' && !config.layout[0].content.trim()) {
+                if (config.layout[0].type == 'text' && !config.layout[0].text.trim()) {
                     config.layout.splice(0, 1);
                 }
             }
             if (config.layout.length > 1) {
                 const l = config.layout.length - 1;
-                if (config.layout[l].type == 'text' && !config.layout[l].content.trim()) {
+                if (config.layout[l].type == 'text' && !config.layout[l].text.trim()) {
                     config.layout.splice(l, 1);
                 }
             }
-            const template = config.layout.length > 1 ? { type: 'container' as 'container', component: 'virtual', attributes: {}, events: {}, content: config.layout } : config.layout[0];
+            const content = config.layout.length > 1 ? { type: 'base' as 'base', component: Virtual, attributes: {}, events: {}, content: config.layout } : config.layout[0];
             const layout: ListComponentASTNode = {
                 ...attributes,
                 type: 'list',
-                component: node.attributes.type?.value || component,
+                repeat: true,
+                component: component,
                 events: config.events,
-                template
+                content
             }
             return { ...config, layout: [layout] };
-        },
-        input(node: XMLElement, component: string = 'textbox'): ScriptBoundConfig {
-            const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes, components);
-            const input: InputComponentASTNode = {
-                ...attributes,
-                type: 'input',
-                events: config.events,
-                component: node.attributes.type?.value || component,
-            };
-            return { events: {}, style: '', layout: [input] };
-        },
-        output(node: XMLElement, component: string = 'html'): ScriptBoundConfig {
-            const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes, components);
-            const output: OutputComponentASTNode = {
-                ...attributes,
-                type: 'output',
-                component: node.attributes.type?.value || component,
-                events: config.events,
-                content: config.layout
-            };
-            return { events: {}, style: '', layout: [output] };
         },
         script(node: XMLElement): ScriptBoundConfig {
             const events = ImportScriptEvents(node.attributes);
@@ -94,29 +94,42 @@ function ConvertXMLElement(node: XMLNode, components: ComponentsDictionary): Scr
     if (!node) {
         return { events: {}, style: '', layout: [] };
     } else if ('text' in node) {
-        return { events: {}, style: '', layout: [{ type: 'text', content: node.text as string, }] };
+        return { events: {}, style: '', layout: [{ type: 'text', text: node.text, component: HTMLTextComponent }] };
     } else if ('literal' in node) {
-        return { events: {}, style: '', layout: [{ type: 'expression', expression: node.literal, }] };
-    } else if (components[node.tag]?.Type in ImportRegistry) {
-        return ImportRegistry[components[node.tag]?.Type as keyof typeof ImportRegistry](node, node.tag);
-    } else if (node.tag in ImportRegistry) {
-        return ImportRegistry[node.tag](node);
-    } else if ('tag' in node) {
+        return { events: {}, style: '', layout: [{ type: 'expression', expression: node.literal as Runnable, component: ExpressionComponent }] };
+    } else if (node.tag == 'script') {
+        return ImportRegistry.script(node);
+    } else if (node.tag == 'style') {
+        return ImportRegistry.style(node);
+    }
+    const component = ApplicationController.GetComponent(node.tag, node.attributes?.type?.value, registry);
+
+    if (component) {
+        if (component.Attributes.repeat) {
+            return ImportRegistry.list(node, component);
+        } else {
+            return ImportRegistry.base(node, component);
+        }
+    }
+
+    if ('tag' in node) {
         const attributes = ImportAttributes(node.attributes);
-        const config = ConvertXMLElements(node.nodes, components);
+        const config = ConvertXMLElements(node.nodes, registry);
         const output: HTMLElementASTNode = {
             ...attributes,
             type: 'html',
             tag: node.tag,
-            content: config.layout
+            content: config.layout,
+            component: HTMLElementComponent
         };
         return { events: {}, style: '', layout: [output] };
 
     };
+    console.log(node);
     throw 'Not a component';
 }
 
-function ConvertXMLElements(nodes: XMLNode[] = [], components: ComponentsDictionary): ScriptBoundConfig {
+function ConvertXMLElements(nodes: XMLNode[] = [], components: ComponentRegistry): ScriptBoundConfig {
     const result: ScriptBoundConfig = { layout: [], events: {}, style: '' };
     for (const node of nodes) {
         const config = ConvertXMLElement(node, components);
@@ -140,10 +153,8 @@ function ImportAttributes(dictionary: { [key: string]: { key: string; value: any
             case 'lock':
             case 'if':
             case 'slots':
-                attributes.attributes[key] = attr;
-                break;
             case 'settings':
-                attributes.settings = attr as AttributeValue;
+                attributes.attributes[key] = attr;
                 break;
             case 'type':
                 break;
@@ -156,7 +167,7 @@ function ImportAttributes(dictionary: { [key: string]: { key: string; value: any
 }
 
 function ImportScriptEvents(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
-    const e = dictionary.on.value || 'global';
+    const e = dictionary.event?.value || 'global';
     return Array.isArray(e) ? e : [e];
 }
 

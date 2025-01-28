@@ -1,43 +1,22 @@
-<container>
-    <script on="load">
-        var a = $.firstName;
+<flow>
+    <script event="load">
+          $.personal.firstName = "John";
     </script>
-    <container settings={"flow":"left-right"} bind="$.personal">
-        <html bind="@path" />
-        Hello my name is <($.firstName)><(" ")><($.lastName)>
-        <div>Template Defined <b style="color:red;">HTML</b></div>
-        <html bind="$root.html" />
-    </container>
-    <container bind="$.personal" settings={"flow":"left-right"}>
-        <input type="text" bind="$.firstName" settings={ "label": "First Name" }>
-            <script on="update">
-                var a = $.firstName;
-            </script>
-        </input>
-        <input if=($ == "Jane") type="text" bind="$.firstName" settings={ "label": "First Name" }/>
+    <h2>Please enter your info</h2>
+    <flow settings={"direction":"left-right"} bind="$.personal">
+        <input type="text" bind="$.firstName" settings={ "label": "First Name" }/>
         <input type="text" bind="$.lastName" settings={ "label": "Last Name" } />
-    </container>
-    <div>
-        Phone numbers 
-    </div>
-    <list type="tabs" settings={"side":"left"} bind="$.contact">
-        <container>
-            <html bind="@path" />
-            <input type="text" bind="$.type" />
-            <input type="text" bind="$.phoneNumber" />
-        </container>
-    </list>
-    <div>
-        Phone numbers but filtered for mobile only
-    </div>
-    <list type="tabs" settings={"side":"top"} bind="$.contact">
-        <container if=($.type == "mobile" )>
-            <html bind="@path" />
-            <input type="text" bind="$.type" />
-            <input type="text" bind="$.phoneNumber" />
-        </container>
-    </list>
-</container>
+    </flow>
+
+    <hr/>
+    <em>Powered by:</em>
+    <flow settings={"direction":"left-right"}>
+        <list bind="$.dependencies" settings={"direction":"left-right"}>
+            <a style="text-align:center;" href=($root.giturl .. $.slug)><($.name)></a>
+        </list>
+    </flow>
+    <h1>Hello <($.personal.firstName)>!</h1>
+</flow>
 <style>
     input {
         color: red;

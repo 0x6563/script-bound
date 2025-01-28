@@ -3,19 +3,20 @@
         "firstName": "Jane",
         "lastName": "Doe"
     },
+    "giturl": "https://github.com/0x6563/",
     "html": "Data Defined <em style=\"color:blue;\">HTML</em>",
-    "contact": [
+    "dependencies": [
         {
-            "type": "home",
-            "phoneNumber": "555-555-0000"
+            "slug": "script-bound",
+            "name":"Script Bound"
         },
         {
-            "type": "mobile",
-            "phoneNumber": "555-555-1111"
+            "slug": "grammar-well",
+            "name":"Grammar Well"
         },
         {
-            "type": "mobile",
-            "phoneNumber": "555-555-2222"
+            "slug": "moderate-code-interpreter",
+            "name":"Moderate Code Interpreter"
         }
     ]
 }

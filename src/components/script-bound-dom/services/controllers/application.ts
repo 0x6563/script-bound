@@ -1,4 +1,4 @@
-import type { ComponentASTNode, ComponentsDictionary, Runnable, ScriptBoundConfig, ValueType } from "../types/types";
+import type { ComponentASTNode, ComponentRegistry, ComponentsDictionary, Runnable, ScriptBoundConfig, ValueType } from "../types/types";
 import { ObjectMutationObserver } from "object-mutation-observer";
 // import { ObjectMutationObserver, type ChangeCallback } from "object-mutation-observer";
 import { Run } from "moderate-code-interpreter";
@@ -19,8 +19,6 @@ export class ApplicationController {
         data: any
     ) {
         this.components = { ...ComponentsByName, ...config.components };
-        console.log(this.components);
-
         this.observer = new ObjectMutationObserver({
             emit: 'sync',
             greedyProxy: true,
@@ -70,16 +68,16 @@ export class ApplicationController {
             this.listeners.delete(data);
             this.observer.unwatch(data, callbacker.main);
         }
-    }
+    } 
 
-    getComponent(node: ComponentASTNode): ValueType<ComponentsDictionary> {
-        if (node.type == 'expression')
-            return ExpressionComponent as any;
-        if (node.type == 'text')
-            return HTMLTextComponent as any;
-        if (node.type == 'html')
-            return HTMLElementComponent as any;
-        return this.components[node.component] || this.components.error;
+    static GetComponent(tag: string, type: string | undefined, registry: ComponentRegistry) {
+        if (tag in registry.byClass && type && registry.byClass[tag][type]) {
+            return registry.byClass[tag][type];
+        }
+
+        if (tag in registry.byName) {
+            return registry.byName[tag];
+        }
     }
 }
 

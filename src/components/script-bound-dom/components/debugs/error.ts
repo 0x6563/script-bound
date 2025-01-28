@@ -1,9 +1,9 @@
-import { OutputComponent } from "../output.ts";
 import type { DOMNodeLike } from "../../services/elements.ts";
 import type { ApplicationController } from "../../services/controllers/application.ts";
+import { BaseComponent } from "../base.ts";
 
-export class DebugError extends OutputComponent {
-    connect(): DOMNodeLike[] {
+export class DebugError extends  BaseComponent {
+    connect(subcomponents: []): DOMNodeLike[] {
         const container = this.controller.application.createNode('div');
         container.setAttribute('style', 'color:red');
 
@@ -17,20 +17,4 @@ export class DebugError extends OutputComponent {
         container.appendChild(pre);
         return [container];
     }
-}
-
-
-export function ErrorBox(application: ApplicationController, message: string) {
-    const container = application.createNode('div');
-    container.setAttribute('style', 'color:red; border:solid 2px red');
-
-    const h1 = application.createNode('h1');
-    container.appendChild(h1);
-    h1.innerHTML = 'Error';
-
-    const pre = application.createNode('pre');
-    pre.innerHTML = message;
-
-    container.appendChild(pre);
-    return [container];
 }

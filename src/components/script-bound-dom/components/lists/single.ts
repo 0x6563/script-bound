@@ -1,18 +1,20 @@
 import type { ComponentController } from "../../services/controllers/component.ts";
-import { ListComponent } from "../list.ts";
+import { BaseComponent } from "../base.ts";
 
-export class Single extends ListComponent {
+export class Single extends BaseComponent {
+    static Attributes = {
+        group: 'list',
+        repeat: true
+    };
     private attributes;
 
-    constructor(protected controller) {
-        super(controller);
+    connect(subcomponents: ComponentController[]) {
         this.attributes = {
             'data-control': "list",
             'data-component': "single",
         }
-    }
 
-    connect(subcomponents: ComponentController[]) {
+
         const container = this.controller.application.createNode('div', this.attributes);
         const component = subcomponents[subcomponents.length - 1]
         if (component) {

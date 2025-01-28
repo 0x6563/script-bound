@@ -1,43 +1,28 @@
 import type { DOMNodeLike, ElementNodeLike } from "../../services/elements.ts";
-import { Events } from "../../services/events.ts";
-import { InputComponent } from "../input.ts";
+import { BaseComponent } from "../base.ts";
 
-export class Textbox extends InputComponent<{ label: string }> {
-    private events: Events<{ value: boolean }> = new Events();
+export class Textbox extends BaseComponent<{ label: string }> {
+    static Attributes = {
+        group: 'input',
+        default: true,
+    }
     private input?: ElementNodeLike;
 
-    connect(): DOMNodeLike[] {
+    connect(subcomponents: []): DOMNodeLike[] {
         const container = this.controller.application.createNode('label');
         this.input = this.controller
             .application
-            .createNode(
-                'input',
-                {
-                    type: 'text',
-                    value: this.controller.data.value
-                },
-                {
-                    change: (e) => { this.events.emit({ value: e.target.value }) }
-                }
-            );
+            .createNode('input', { type: 'text', value: this.controller.data.value }, { change: (e) => { this.controller.eventHandler({ event: 'update', value: e.target.value }) } });
+        console.log('settings', this.controller.settings);
         container.appendChild(this.input);
-
         const text = this.controller.application.createNode('div', { 'data-bound-label': '' });
-        text.innerHTML = this.controller.settings?.value?.label || '&nbsp;';
+        text.innerHTML = this.controller.settings?.label || '&nbsp;';
         container.appendChild(text);
         return [container];
     }
 
-    update(value: any) {
+    update(type: string, value: any) {
         this.input?.setAttribute('value', value);
         (this.input as unknown as HTMLInputElement).value = value;
-    }
-
-    listen(event: string, callback: (event?: any) => void): void {
-        this.events.addEventListener(callback);
-    }
-
-    unlisten(event: string, callback: (event?: any) => void): void {
-        this.events.removeEventListener(callback);
     }
 }

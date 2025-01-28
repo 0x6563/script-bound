@@ -1,5 +1,4 @@
 <script lang="ts" setup>
-import type { ScriptBoundConfig } from './components/script-bound-dom/services/types/types';
 import { watch, ref, reactive } from 'vue';
 import ScriptBound from './components/script-bound-dom/script-bound.ce.vue';
 import Code from './components/monaco.ce.vue';
@@ -18,7 +17,7 @@ const state = reactive<{
 }>({
   config: undefined,
   data: SampleData,
-  render: 'Form'
+  render: 'Rendered'
 })
 
 let configString = ref(SampleXML);
@@ -61,12 +60,12 @@ function OnChange() {
 
     <div class="flx top-bottom">
       <h1>
-        <Toggle :value="state.render" :options="['Form', 'Data', 'AST', 'CST']" @change="state.render = $event" />
+        <Toggle :value="state.render" :options="['CST', 'AST', 'Data', 'Rendered',]" @change="state.render = $event" />
       </h1>
-      <ScriptBound v-if="state.render == 'Form' && state.config?.ast" :data=state.data :config=state.config.ast
+      <ScriptBound v-if="state.render == 'Rendered' && state.config?.ast" :data=state.data :config=state.config.ast
         @change=OnChange />
-      <Code v-if="state.render == 'AST'" :value=state.config.ast width="fill" height="fill" :readonly=true />
-      <Code v-if="state.render == 'CST'" :value=state.config.cst width="fill" height="fill" :readonly=true />
+      <Code v-if="state.render == 'AST'" :value=state.config?.ast width="fill" height="fill" :readonly=true />
+      <Code v-if="state.render == 'CST'" :value=state.config?.cst width="fill" height="fill" :readonly=true />
       <Code v-if="state.render == 'Data'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />
     </div>
   </div>

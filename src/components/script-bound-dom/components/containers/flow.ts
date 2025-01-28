@@ -1,14 +1,18 @@
-import { GetLayoutFlow } from "../../services/utility.ts";
 import type { ComponentController } from "../../services/controllers/component.ts";
-import { ContainerComponent } from "../container.ts";
-import type { LayoutFlow } from "../../services/types/types.ts";
+import type { BaseComponentASTNode, LayoutFlow } from "../../services/types/types.ts";
+import { GetLayoutFlow } from "../../services/utility.ts";
+import { BaseComponent } from "../base.ts";
 
-export class Flow extends ContainerComponent<LayoutFlow> {
+export class Flow extends BaseComponent<LayoutFlow> {
+    static Attributes = {
+        group: 'container',
+        default: true
+    }
     private attributes;
 
-    constructor(protected controller) {
+    constructor(protected controller: ComponentController<BaseComponentASTNode, LayoutFlow>) {
         super(controller);
-        const { direction, wrap } = GetLayoutFlow(this.controller.node.settings);
+        const { direction, wrap } = GetLayoutFlow(this.controller.settings);
         this.attributes = {
             'data-flow': direction?.toString(),
             'data-wrap': wrap.toString(),
