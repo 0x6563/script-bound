@@ -3,20 +3,21 @@
         "firstName": "Jane",
         "lastName": "Doe"
     },
+    "counter": 0,
     "giturl": "https://github.com/0x6563/",
     "html": "Data Defined <em style=\"color:blue;\">HTML</em>",
     "dependencies": [
         {
             "slug": "script-bound",
-            "name":"Script Bound"
+            "name": "Script Bound"
         },
         {
             "slug": "grammar-well",
-            "name":"Grammar Well"
+            "name": "Grammar Well"
         },
         {
             "slug": "moderate-code-interpreter",
-            "name":"Moderate Code Interpreter"
+            "name": "Moderate Code Interpreter"
         }
     ]
 }

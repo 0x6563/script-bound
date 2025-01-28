@@ -15,7 +15,16 @@
             <a style="text-align:center;" href=($root.giturl .. $.slug)><($.name)></a>
         </list>
     </flow>
-    <h1>Hello <($.personal.firstName)>!</h1>
+    <h1>Hello <($.personal.firstName)><span if=($.personal.lastName)> <( $.personal.lastName )></span>!</h1>
+    <flow settings={"direction":"left-right"}>
+        <button>
+            <script event="action">
+                $.counter = $.counter + 1;
+            </script>
+            Click this button
+        </button>
+        <h4>You've clicked <($.counter)> times!</h4>
+    </flow>
 </flow>
 <style>
     input {
