@@ -11,7 +11,7 @@ export class Button extends BaseComponent {
     connect(subcomponents: ComponentController[]) {
         this.element = this.controller
             .application
-            .createNode('button', {}, { click: (e) => { this.controller.eventHandler({ event: 'action', value: null }) } });
+            .createNode('button', this.controller.htmlAttributes(), { click: (e) => { this.controller.eventHandler({ event: 'action', value: null }) } });
         for (const component of subcomponents) {
             const doms = component.connect();
             for (const dom of doms) {

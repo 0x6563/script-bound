@@ -103,12 +103,29 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         if (e.event == 'update') {
             this.data.value = e.value;
         }
+
         if (e.event == 'action') {
             if (this.events.action) {
                 this.data.runScript(this.events.action);
             }
         }
 
+    }
+
+    htmlAttributes() {
+        const attributes = {};
+
+        for (const key in this.additional) {
+            attributes[key] = this.additional[key].value;
+        }
+
+        if (this.attributes.id) {
+            attributes['id'] = this.attributes.id.value;
+        }
+        if (this.attributes.class) {
+            attributes['class'] = this.attributes.class.value;
+        }
+        return attributes;
     }
 
     private render() {

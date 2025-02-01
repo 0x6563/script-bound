@@ -1,4 +1,4 @@
-<flow>
+<div class="wrapper">
     <script event="load">
           $.personal.firstName = "John";
     </script>
@@ -7,26 +7,38 @@
         <input type="text" bind="$.firstName" settings={ "label": "First Name" }/>
         <input type="text" bind="$.lastName" settings={ "label": "Last Name" } />
     </flow>
-
-    <hr/>
+    <br/>
+    <hr/> 
+    <h1>Hello <($.personal.firstName)><span if=($.personal.lastName)> <( $.personal.lastName )></span>!</h1>
+    <flow settings={"direction":"left-right"}>
+        <button class="click">
+            <script event="action">
+                $.counter = $.counter + 1;
+            </script>
+            Click this button
+        </button>
+        <h4 class="center">You've clicked that button <($.counter)> times!</h4>
+    </flow>
     <em>Powered by:</em>
     <flow settings={"direction":"left-right"}>
         <list bind="$.dependencies" settings={"direction":"left-right"}>
             <a style="text-align:center;" href=($root.giturl .. $.slug)><($.name)></a>
         </list>
     </flow>
-    <h1>Hello <($.personal.firstName)><span if=($.personal.lastName)> <( $.personal.lastName )></span>!</h1>
-    <flow settings={"direction":"left-right"}>
-        <button>
-            <script event="action">
-                $.counter = $.counter + 1;
-            </script>
-            Click this button
-        </button>
-        <h4>You've clicked <($.counter)> times!</h4>
-    </flow>
-</flow>
+</div>
 <style>
+    .center{
+        text-align:center;
+    }
+    .wrapper{
+        padding: 24px;
+    }
+
+    .click{
+        background: blue;
+        color: #FFF;
+    }
+
     input {
         color: red;
         border: none;

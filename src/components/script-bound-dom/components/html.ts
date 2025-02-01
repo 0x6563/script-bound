@@ -11,11 +11,8 @@ export class HTMLElementComponent<T extends ComponentSettings = {}> {
     constructor(protected controller: ComponentController<HTMLElementASTNode, T>) { };
 
     connect(subcomponents: ComponentController[]): DOMNodeLike[] {
-        const attributes = {};
-        for (const key in this.controller.additional) {
-            attributes[key] = this.controller.additional[key].value;
-        }
-        const container = this.controller.application.createNode(this.controller.node.tag, attributes);
+ 
+        const container = this.controller.application.createNode(this.controller.node.tag, this.controller.htmlAttributes());
         for (const component of subcomponents) {
             const doms = component.connect();
             for (const dom of doms) {

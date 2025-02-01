@@ -117,7 +117,7 @@ body,
 h1 {
   margin: 0;
   padding: 8px 16px;
-  border-bottom: solid 1px black;
+  border-bottom: solid 1px var(--stroke);
   flex: 0 1 auto;
   height: auto !important;
   box-sizing: border-box;
