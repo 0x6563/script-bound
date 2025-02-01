@@ -1,7 +1,4 @@
 <div class="wrapper">
-    <script event="load">
-          $.personal.firstName = "John";
-    </script>
     <h2>Please enter your info</h2>
     <flow settings={"direction":"left-right"} bind="$.personal">
         <input type="text" bind="$.firstName" settings={ "label": "First Name" }/>
