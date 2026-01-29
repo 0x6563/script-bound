@@ -72,7 +72,7 @@ export interface Lifecycles {
 }
 
 export interface Bindable {
-    bind?: AttributeValue;
+    scope?: AttributeValue;
 }
 
 export interface ConditionalShow {

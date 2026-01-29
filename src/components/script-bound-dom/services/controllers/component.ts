@@ -46,19 +46,19 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         this.node = parameters.node as T;
         this.events = 'events' in this.node ? this.node.events : {};
         if (this.node.attributes) {
-            if (this.node.attributes.bind) {
-                this.attributes.bind = new AttributeController<string>({
+            if (this.node.attributes.scope) {
+                this.attributes.scope = new AttributeController<string>({
                     data: this.scope,
-                    attribute: this.node.attributes.bind,
+                    attribute: this.node.attributes.scope,
                 });
 
-                this.scope = this.scope.fork(this.attributes.bind.value);
+                this.scope = this.scope.fork(this.attributes.scope.value);
                 this.owns.push(this.scope);
                 addListener = true;
             }
 
             for (const key in this.node.attributes) {
-                if (key !== 'bind') {
+                if (key !== 'scope') {
                     this.attributes[key] = new AttributeController({ data: this.scope, attribute: this.node.attributes[key] });
                 }
             }
@@ -177,9 +177,9 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         if ((this.node as ListComponentASTNode).repeat) {
             const content = (this.node as ListComponentASTNode).content;
             if (Array.isArray(this.scope.value)) {
-                this.subcomponents = this.scope.value.map((_, bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
+                this.subcomponents = this.scope.value.map((_, scope) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, scope: { type: 'json', value: scope.toString() } } } as any }));
             } else if (typeof this.scope.value == 'object') {
-                this.subcomponents = Object.keys(this.scope.value).map((bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
+                this.subcomponents = Object.keys(this.scope.value).map((scope) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, scope: { type: 'json', value: scope.toString() } } } as any }));
             }
         } else if ("content" in this.node && Array.isArray(this.node.content)) {
             this.subcomponents = this.node.content.map(v => new ComponentController({ parent: this, node: v }));

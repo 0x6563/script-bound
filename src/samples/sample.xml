@@ -1,8 +1,8 @@
 <div class="wrapper">
     <h2>Please enter your info</h2>
-    <flow settings={"direction":"left-right"} bind="$.personal">
-        <input type="text" bind="$.firstName" settings={ "label": "First Name" }/>
-        <input type="text" bind="$.lastName" settings={ "label": "Last Name" } />
+    <flow settings={"direction":"left-right"} scope="$.personal">
+        <input type="text" scope="$.firstName" settings={ "label": "First Name" }/>
+        <input type="text" scope="$.lastName" settings={ "label": "Last Name" } />
     </flow>
     <br/>
     <hr/> 
@@ -18,7 +18,7 @@
     </flow>
     <em>Powered by:</em>
     <flow settings={"direction":"left-right"}>
-        <list bind="$.dependencies" settings={"direction":"left-right"}>
+        <list scope="$.dependencies" settings={"direction":"left-right"}>
             <a style="text-align:center;" href=($root.giturl .. $.slug)><($.name)></a>
         </list>
     </flow>

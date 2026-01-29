@@ -148,7 +148,7 @@ function ImportAttributes(dictionary: { [key: string]: { key: string; value: any
         switch (key) {
             case 'id':
             case 'class':
-            case 'bind':
+            case 'scope':
             case 'unlock':
             case 'lock':
             case 'if':
