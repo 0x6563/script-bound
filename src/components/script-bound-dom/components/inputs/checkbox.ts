@@ -10,7 +10,7 @@ export class Checkbox extends BaseComponent {
     connect(subcomponents: []): DOMNodeLike[] {
         this.input = this.controller
             .application
-            .createNode('input', { type: 'checkbox', value: this.controller.data.value }, { change: (v) => this.controller.eventHandler({ event: 'update', value: v }) });
+            .createNode('input', { type: 'checkbox', value: this.controller.scope.value }, { change: (v) => this.controller.eventHandler({ event: 'update', value: v }) });
         return [this.input];
     }
 

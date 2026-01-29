@@ -12,7 +12,7 @@ export class Textbox extends BaseComponent<{ label: string }> {
         const container = this.controller.application.createNode('label');
         this.input = this.controller
             .application
-            .createNode('input', { type: 'text', value: this.controller.data.value }, { change: (e) => { this.controller.eventHandler({ event: 'update', value: e.target.value }) } });
+            .createNode('input', { type: 'text', value: this.controller.scope.value }, { change: (e) => { this.controller.eventHandler({ event: 'update', value: e.target.value }) } });
         console.log('settings', this.controller.settings);
         container.appendChild(this.input);
         const text = this.controller.application.createNode('div', { 'data-bound-label': '' });

@@ -7,7 +7,7 @@ import { AttributeController } from './attribute';
 
 export class ComponentController<T extends ComponentASTNode = ComponentASTNode, T2 extends ComponentSettings = {}> {
     node: T;
-    data: DataController;
+    scope: DataController;
     application: ApplicationController;
     attributes: ComponentAttributesDictionary = {};
     additional: ComponentAttributesDictionary = {};
@@ -36,10 +36,10 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         let addListener = false;
         if ('parent' in parameters) {
             this.parent = parameters.parent;
-            this.data = this.parent.data;
+            this.scope = this.parent.scope;
             this.application = this.parent.application;
         } else {
-            this.data = parameters.data;
+            this.scope = parameters.data;
             this.application = parameters.application;
         }
 
@@ -48,40 +48,40 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         if (this.node.attributes) {
             if (this.node.attributes.bind) {
                 this.attributes.bind = new AttributeController<string>({
-                    data: this.data,
+                    data: this.scope,
                     attribute: this.node.attributes.bind,
                 });
 
-                this.data = this.data.fork(this.attributes.bind.value);
-                this.owns.push(this.data);
+                this.scope = this.scope.fork(this.attributes.bind.value);
+                this.owns.push(this.scope);
                 addListener = true;
             }
 
             for (const key in this.node.attributes) {
                 if (key !== 'bind') {
-                    this.attributes[key] = new AttributeController({ data: this.data, attribute: this.node.attributes[key] });
+                    this.attributes[key] = new AttributeController({ data: this.scope, attribute: this.node.attributes[key] });
                 }
             }
 
         }
         if ('additional' in this.node) {
             for (const key in this.node.additional) {
-                this.additional[key] = new AttributeController({ data: this.data, attribute: this.node.additional[key] });
+                this.additional[key] = new AttributeController({ data: this.scope, attribute: this.node.additional[key] });
             }
 
         }
 
-        this.attributes.if = this.attributes.if || new AttributeController({ data: this.data, attribute: { type: 'json', value: true } });
+        this.attributes.if = this.attributes.if || new AttributeController({ data: this.scope, attribute: { type: 'json', value: true } });
 
         this.component = this.node.component;
         addListener = addListener || this.node.type == 'expression';
         if (addListener) {
             this.dataListener = () => this.onDataChanges();
-            this.data.changes.addEventListener(this.dataListener);
+            this.scope.changes.addEventListener(this.dataListener);
         }
 
         if (this.events.load)
-            this.data.runScript(this.events.load)
+            this.scope.runScript(this.events.load)
     }
 
     connect(): DOMNodeLike[] {
@@ -101,12 +101,12 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
 
     eventHandler(e: { event: string, value: any }) {
         if (e.event == 'update') {
-            this.data.value = e.value;
+            this.scope.value = e.value;
         }
 
         if (e.event == 'action') {
             if (this.events.action) {
-                this.data.runScript(this.events.action);
+                this.scope.runScript(this.events.action);
             }
         }
 
@@ -167,7 +167,7 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         }
 
         if (this.state.enabled) {
-            (this.componentInstance as BaseComponent).update('value', this.data.value);
+            (this.componentInstance as BaseComponent).update('value', this.scope.value);
         }
     }
 
@@ -176,10 +176,10 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode, 
         this.componentInstance = new this.component(this as any);
         if ((this.node as ListComponentASTNode).repeat) {
             const content = (this.node as ListComponentASTNode).content;
-            if (Array.isArray(this.data.value)) {
-                this.subcomponents = this.data.value.map((_, bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
-            } else if (typeof this.data.value == 'object') {
-                this.subcomponents = Object.keys(this.data.value).map((bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
+            if (Array.isArray(this.scope.value)) {
+                this.subcomponents = this.scope.value.map((_, bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
+            } else if (typeof this.scope.value == 'object') {
+                this.subcomponents = Object.keys(this.scope.value).map((bind) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, bind: { type: 'json', value: bind.toString() } } } as any }));
             }
         } else if ("content" in this.node && Array.isArray(this.node.content)) {
             this.subcomponents = this.node.content.map(v => new ComponentController({ parent: this, node: v }));

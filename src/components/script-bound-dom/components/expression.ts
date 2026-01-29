@@ -15,11 +15,11 @@ export class ExpressionComponent<T extends ComponentSettings = {}> {
     };
 
     connect(subcomponents: ComponentController[]): DOMNodeLike[] {
-        this.node.textContent = this.controller.application.runScript(this.controller.data.proxy(), this.controller.node.expression)
+        this.node.textContent = this.controller.application.runScript(this.controller.scope.proxy(), this.controller.node.expression)
         return [this.node]
     }
     disconnect(): void { };
     update() {
-        this.node.textContent = this.controller.application.runScript(this.controller.data.proxy(), this.controller.node.expression)
+        this.node.textContent = this.controller.application.runScript(this.controller.scope.proxy(), this.controller.node.expression)
     }
 }
