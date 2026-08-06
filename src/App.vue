@@ -62,8 +62,7 @@ function OnChange() {
       <h1>
         <Toggle :value="state.render" :options="['CST', 'AST', 'Data', 'Rendered',]" @change="state.render = $event" />
       </h1>
-      <ScriptBound v-if="state.render == 'Rendered' && state.config?.ast" :data=state.data :config=state.config.ast
-        @change=OnChange />
+      <ScriptBound v-if="state.render == 'Rendered' && state.config?.ast" :data=state.data :config=state.config.ast @change=OnChange />
       <Code v-if="state.render == 'AST'" :value=state.config?.ast width="fill" height="fill" :readonly=true />
       <Code v-if="state.render == 'CST'" :value=state.config?.cst width="fill" height="fill" :readonly=true />
       <Code v-if="state.render == 'Data'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />

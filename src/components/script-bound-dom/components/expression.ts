@@ -1,25 +1,18 @@
-import type { ComponentSettings, ExpressionASTNode } from "../services/types/types";
+import type { ExpressionASTNode } from "../services/types/types";
 import type { DOMNodeLike, TextNodeLike } from "../services/elements";
-import { ComponentController, type ComponentControllerConstructor } from "../services/controllers/component";
+import { BaseComponent } from "./base";
 
-export class ExpressionComponent<T extends ComponentSettings = {}> {
-    static Attributes = {
-        group: '',
-        repeat: false
-    }
+export class ExpressionComponent extends BaseComponent<ExpressionASTNode> {
+    node?: TextNodeLike;
 
-    node: TextNodeLike;
 
-    constructor(protected controller: ComponentController<ExpressionASTNode, T>) {
+    connect(): DOMNodeLike[] {
         this.node = this.controller.application.createText('');
-    };
-
-    connect(subcomponents: ComponentController[]): DOMNodeLike[] {
-        this.node.textContent = this.controller.application.runScript(this.controller.scope.proxy(), this.controller.node.expression)
+        this.node.textContent = this.controller.dataController.runScript(this.controller.node.expression);
         return [this.node]
     }
-    disconnect(): void { };
+
     update() {
-        this.node.textContent = this.controller.application.runScript(this.controller.scope.proxy(), this.controller.node.expression)
+        this.node!.textContent = this.controller.dataController.runScript(this.controller.node.expression);
     }
 }

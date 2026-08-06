@@ -1,26 +1,13 @@
 import type { DOMNodeLike } from "../services/elements";
-import type { ComponentSettings, HTMLElementASTNode } from "../services/types/types";
-import { ComponentController, type ComponentControllerConstructor } from "../services/controllers/component";
+import type { ElementASTNode } from "../services/types/types";
+import { BaseComponent } from "./base";
 
-export class HTMLElementComponent<T extends ComponentSettings = {}> {
-    static Attributes = {
-        group: '',
-        repeat: false
-    }
-
-    constructor(protected controller: ComponentController<HTMLElementASTNode, T>) { };
-
-    connect(subcomponents: ComponentController[]): DOMNodeLike[] {
- 
+export class HTMLElementComponent extends BaseComponent<ElementASTNode> {
+    connect(): DOMNodeLike[] {
         const container = this.controller.application.createNode(this.controller.node.tag, this.controller.htmlAttributes());
-        for (const component of subcomponents) {
-            const doms = component.connect();
-            for (const dom of doms) {
-                container.appendChild(dom);
-            }
-        }
+        const refNode = this.controller.application.createComment('');
+        container.appendChild(refNode);
+        this.controller.createChildren({ refNode })
         return [container];
     }
-
-    disconnect(): void { };
 }

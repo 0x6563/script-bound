@@ -9,15 +9,18 @@
     "dependencies": [
         {
             "slug": "script-bound",
-            "name": "Script Bound"
+            "name": "Script Bound",
+            "description": "The framework rendering this very page - it turns XML-Plus templates into a live, reactive DOM."
         },
         {
             "slug": "grammar-well",
-            "name": "Grammar Well"
+            "name": "Grammar Well",
+            "description": "An Earley-based parser generator, compiling .well grammar files into JS parsers. Both XML-Plus and MCI's own script grammar are built with it."
         },
         {
             "slug": "moderate-code-interpreter",
-            "name": "Moderate Code Interpreter"
+            "name": "Moderate Code Interpreter",
+            "description": "The embedded scripting language that powers every expression and <script> block in this sample - including the query that found this description."
         }
     ]
 }

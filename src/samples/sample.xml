@@ -1,12 +1,12 @@
 <div class="wrapper">
     <h2>Please enter your info</h2>
-    <flow settings={"direction":"left-right"} scope="$.personal">
-        <input type="text" scope="$.firstName" settings={ "label": "First Name" }/>
-        <input type="text" scope="$.lastName" settings={ "label": "Last Name" } />
+    <flow settings={"direction":"left-right"} $=($.personal)>
+        <input type="text" value&=($.firstName) settings={ "label": "First Name" }/>
+        <input type="text" value&=($.lastName) settings={ "label": "Last Name" } />
     </flow>
     <br/>
     <hr/> 
-    <h1>Hello <($.personal.firstName)><span if=($.personal.lastName)> <( $.personal.lastName )></span>!</h1>
+    <h1>Hello <($.personal.firstName)><if ($.personal.lastName)><span><( $.personal.lastName )></span></if>!</h1>
     <flow settings={"direction":"left-right"}>
         <button class="click">
             <script event="action">
@@ -18,10 +18,26 @@
     </flow>
     <em>Powered by:</em>
     <flow settings={"direction":"left-right"}>
-        <list scope="$.dependencies" settings={"direction":"left-right"}>
+        <for ($.dependencies)>
             <a style="text-align:center;" href=($root.giturl .. $.slug)><($.name)></a>
-        </list>
+        </for>
     </flow>
+    <hr/>
+    <h4>Pick a dependency:</h4>
+    <select value&=($.selectedSlug)>
+        <option value="">- choose one -</option>
+        <for ($.dependencies)>
+            <option value=($.slug)><($.name)></option>
+        </for>
+    </select>
+    <!-- $= narrows scope to the query result, same as $=($.personal) does above with a plain reference -->
+    <if ($.selectedSlug)>
+        <div class="detail-card" $=(query d in $.dependencies filter d.slug == $.selectedSlug first d)>
+            <h4><($.name)></h4>
+            <p><($.description)></p>
+            <p><a href=($root.giturl .. $.slug)><($root.giturl .. $.slug)></a></p>
+        </div>
+    </if>
 </div>
 <style>
     .center{
@@ -43,24 +59,28 @@
         font-size: 14px;
 
     }
-    input + *{
-        position: relative;
-        transition: all 200ms;
-        font-size: 14px;
-        top: 2px;
-        left: 0px;
-        height: 12px;
-        pointer-events:none;
-    }
-    input:not(:focus):placeholder-shown + * {
-        font-size: 14px;
-        top: -24px;
-        left: 6px;
-    }
 
     input:focus {
         outline: none;
         border-bottom: 2px solid blue;
+    }
+
+    [data-component="select"] {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-width: 240px;
+    }
+
+    .detail-card {
+        margin-top: 8px;
+        padding: 12px 16px;
+        max-width: 320px;
+        border: solid 1px #bbb;
+    }
+
+    .detail-card p {
+        margin: 4px 0;
     }
 
     [data-control] {

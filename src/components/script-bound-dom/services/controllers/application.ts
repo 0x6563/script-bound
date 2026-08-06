@@ -1,19 +1,15 @@
-import type { ComponentASTNode, ComponentRegistry, ComponentsDictionary, Runnable, ScriptBoundConfig, ValueType } from "../types/types";
+import type { ComponentsDictionary, Runnable, ScriptBoundConfig, ValueType } from "../types/types";
 import { ObjectMutationObserver } from "object-mutation-observer";
-// import { ObjectMutationObserver, type ChangeCallback } from "object-mutation-observer";
 import { Run } from "moderate-code-interpreter";
-import { CreateCommentNode, CreateElementNode, CreateTextNode, type ElementNodeLike, type TextNodeLike } from "../elements";
+import { CreateCommentNode, CreateElementNode, CreateFragment, CreateTextNode, type ElementNodeLike, type TextNodeLike } from "../elements";
 import { ComponentsByName } from "../../components/registry";
-import { ExpressionComponent } from "../../components/expression";
-import { HTMLTextComponent } from "../../components/text";
-import { HTMLElementComponent } from "../../components/html";
 type ChangeCallback = (e: any) => void;
 
 export class ApplicationController {
     observer: ObjectMutationObserver;
     data: any;
     private listeners: WeakMap<any, { main: ChangeCallback, listeners: Set<ChangeCallback> }> = new WeakMap();
-    private components: ComponentsDictionary;
+    components: ComponentsDictionary;
     constructor(
         public config: ScriptBoundConfig,
         data: any
@@ -51,6 +47,10 @@ export class ApplicationController {
         return CreateCommentNode(comment);
     }
 
+    createFragment() {
+        return CreateFragment();
+    }
+
     watch(data: any, callback: ChangeCallback) {
         if (!this.listeners.has(data)) {
             const callbacker: { main: ChangeCallback, listeners: Set<ChangeCallback> } = { main: undefined as any, listeners: new Set<ChangeCallback>() };
@@ -68,16 +68,10 @@ export class ApplicationController {
             this.listeners.delete(data);
             this.observer.unwatch(data, callbacker.main);
         }
-    } 
+    }
 
-    static GetComponent(tag: string, type: string | undefined, registry: ComponentRegistry) {
-        if (tag in registry.byClass && type && registry.byClass[tag][type]) {
-            return registry.byClass[tag][type];
-        }
-
-        if (tag in registry.byName) {
-            return registry.byName[tag];
-        }
+    getComponent(tag: string | Symbol) {
+        return this.components[tag as string] || this.components['html'];
     }
 }
 

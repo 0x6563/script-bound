@@ -1,34 +1,20 @@
-import type { ComponentController } from "../../services/controllers/component.ts";
-import type { BaseComponentASTNode, LayoutFlow } from "../../services/types/types.ts";
 import { GetLayoutFlow } from "../../services/utility.ts";
 import { BaseComponent } from "../base.ts";
 
-export class Flow extends BaseComponent<LayoutFlow> {
-    static Attributes = {
-        group: 'container',
-        default: true
-    }
-    private attributes;
+export class Flow extends BaseComponent {
+    attributes: { [key: string]: string } = {};
 
-    constructor(protected controller: ComponentController<BaseComponentASTNode, LayoutFlow>) {
-        super(controller);
-        const { direction, wrap } = GetLayoutFlow(this.controller.settings);
-        this.attributes = {
+    connect() {
+        const { direction, wrap } = GetLayoutFlow(this.controller.attributes.settings?.value);
+        const container = this.controller.application.createNode('div', {
             'data-flow': direction?.toString(),
             'data-wrap': wrap.toString(),
             'data-control': "container",
             'data-component': "flow",
-        }
-    }
-
-    connect(subcomponents: ComponentController[]) {
-        const container = this.controller.application.createNode('div', this.attributes);
-        for (const component of subcomponents) {
-            const doms = component.connect();
-            for (const dom of doms) {
-                container.appendChild(dom);
-            }
-        }
+        });
+        const refNode = this.controller.application.createComment('');
+        container.appendChild(refNode);
+        this.controller.createChildren({ refNode });
         return [container];
     }
 }

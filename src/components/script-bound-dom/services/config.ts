@@ -1,85 +1,43 @@
-import type { ScriptBoundConfig, BaseComponentASTNode, ListComponentASTNode, ComponentsDictionary, HTMLElementASTNode, AttributeValue, Runnable, ComponentRegistry, ComponentClass } from "./types/types.js";
+import type { ScriptBoundConfig, ElementASTNode, Runnable, } from "./types/types.js";
 import { Parse } from 'grammar-well/parse';
 import grammar from './xml.js';
-import { ComponentsByName } from "../components/registry.js";
-import { ApplicationController } from "./controllers/application.js";
-import { HTMLElementComponent } from "../components/html.js";
-import { Virtual } from "../components/containers/virtual.js";
-import { HTMLTextComponent } from "../components/text.js";
-import { ExpressionComponent } from "../components/expression.js";
 
-export function ParseConfigString(input: string, components: ComponentsDictionary = {}): { cst: any, ast: ScriptBoundConfig } {
-    const c = { ...ComponentsByName, ...components }
-    const registry: ComponentRegistry = {
-        byName: {},
-        byClass: {}
-    }
+export function ParseConfigString(input: string): { cst: any, ast: ScriptBoundConfig } {
 
-    for (const key in c) {
-        registry.byName[key] = c[key]
-        if (c[key].Attributes.group) {
-            registry.byClass[c[key].Attributes.group] = registry.byClass[c[key].Attributes.group] || {};
-            registry.byClass[c[key].Attributes.group][key] = c[key];
-            if (c[key].Attributes.default) {
-                registry.byName[c[key].Attributes.group] = c[key];
-            }
-        }
-    }
-
-    console.log(registry)
     try {
         const parsed = ParseSample(input);
+        console.log(parsed);
+
         if (parsed.error) {
             console.error(parsed.error);
             return undefined as unknown as any;
         }
         const xml: XML = parsed.result;
         console.log(xml);
-        return { cst: xml, ast: ConvertXMLElements(xml.nodes, registry) };
+        return { cst: xml, ast: ConvertXMLElements(xml.nodes) };
     } catch (error) {
         console.log(error);
     }
     return { cst: {}, ast: { layout: [], events: {}, style: '' } };
 }
 
-function ConvertXMLElement(node: XMLNode, registry: ComponentRegistry): ScriptBoundConfig {
+function ConvertXMLElement(node: XMLNode): ScriptBoundConfig {
     const ImportRegistry = {
-        base(node: XMLElement, component: ComponentClass): ScriptBoundConfig {
+        base(node: XMLElement): ScriptBoundConfig {
             const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes, registry);
-            const input: BaseComponentASTNode = {
+            const config = ConvertXMLElements(node.nodes);
+            const input: ElementASTNode = {
                 ...attributes,
-                type: 'base',
-                component: component,
+                type: 'element',
+                tag: node.tag,
                 events: config.events,
                 content: config.layout,
             };
+
+            if (node.expression)
+                input.expression = node.expression;
+
             return { events: {}, style: '', layout: [input] };
-        },
-        list(node: XMLElement, component: ComponentClass): ScriptBoundConfig {
-            const attributes = ImportAttributes(node.attributes);
-            const config = ConvertXMLElements(node.nodes, registry);
-            if (config.layout.length > 1) {
-                if (config.layout[0].type == 'text' && !config.layout[0].text.trim()) {
-                    config.layout.splice(0, 1);
-                }
-            }
-            if (config.layout.length > 1) {
-                const l = config.layout.length - 1;
-                if (config.layout[l].type == 'text' && !config.layout[l].text.trim()) {
-                    config.layout.splice(l, 1);
-                }
-            }
-            const content = config.layout.length > 1 ? { type: 'base' as 'base', component: Virtual, attributes: {}, events: {}, content: config.layout } : config.layout[0];
-            const layout: ListComponentASTNode = {
-                ...attributes,
-                type: 'list',
-                repeat: true,
-                component: component,
-                events: config.events,
-                content
-            }
-            return { ...config, layout: [layout] };
         },
         script(node: XMLElement): ScriptBoundConfig {
             const events = ImportScriptEvents(node.attributes);
@@ -94,45 +52,21 @@ function ConvertXMLElement(node: XMLNode, registry: ComponentRegistry): ScriptBo
     if (!node) {
         return { events: {}, style: '', layout: [] };
     } else if ('text' in node) {
-        return { events: {}, style: '', layout: [{ type: 'text', text: node.text, component: HTMLTextComponent }] };
+        return { events: {}, style: '', layout: [{ type: 'text', text: node.text }] };
     } else if ('literal' in node) {
-        return { events: {}, style: '', layout: [{ type: 'expression', expression: node.literal as Runnable, component: ExpressionComponent }] };
+        return { events: {}, style: '', layout: [{ type: 'expression', expression: node.literal as Runnable }] };
     } else if (node.tag == 'script') {
         return ImportRegistry.script(node);
     } else if (node.tag == 'style') {
         return ImportRegistry.style(node);
     }
-    const component = ApplicationController.GetComponent(node.tag, node.attributes?.type?.value, registry);
-
-    if (component) {
-        if (component.Attributes.repeat) {
-            return ImportRegistry.list(node, component);
-        } else {
-            return ImportRegistry.base(node, component);
-        }
-    }
-
-    if ('tag' in node) {
-        const attributes = ImportAttributes(node.attributes);
-        const config = ConvertXMLElements(node.nodes, registry);
-        const output: HTMLElementASTNode = {
-            ...attributes,
-            type: 'html',
-            tag: node.tag,
-            content: config.layout,
-            component: HTMLElementComponent
-        };
-        return { events: {}, style: '', layout: [output] };
-
-    };
-    console.log(node);
-    throw 'Not a component';
+    return ImportRegistry.base((node as XMLElement));
 }
 
-function ConvertXMLElements(nodes: XMLNode[] = [], components: ComponentRegistry): ScriptBoundConfig {
+function ConvertXMLElements(nodes: XMLNode[] = []): ScriptBoundConfig {
     const result: ScriptBoundConfig = { layout: [], events: {}, style: '' };
     for (const node of nodes) {
-        const config = ConvertXMLElement(node, components);
+        const config = ConvertXMLElement(node);
         result.layout.push(...config.layout);
         result.style += config.style;
         Object.assign(result.events, config.events);
@@ -140,28 +74,12 @@ function ConvertXMLElements(nodes: XMLNode[] = [], components: ComponentRegistry
     return result;
 }
 
-function ImportAttributes(dictionary: { [key: string]: { key: string; value: any; type: string } }) {
-    const attributes = { attributes: {}, settings: undefined as unknown as AttributeValue, additional: {} };
+function ImportAttributes(dictionary: { [key: string]: { key: string; value: any; type: string; binding?: boolean } }) {
+    const attributes = { attributes: {} };
     for (const key in dictionary) {
-        const { value, type } = dictionary[key];
-        const attr = { value, type };
-        switch (key) {
-            case 'id':
-            case 'class':
-            case 'scope':
-            case 'unlock':
-            case 'lock':
-            case 'if':
-            case 'slots':
-            case 'settings':
-                attributes.attributes[key] = attr;
-                break;
-            case 'type':
-                break;
-            default:
-                attributes.additional[key] = attr;
-                break;
-        }
+        const { value, type, binding } = dictionary[key];
+        const attr = { value, type, ...(binding ? { binding } : {}) };
+        attributes.attributes[key] = attr;
     }
     return attributes;
 }
@@ -192,7 +110,11 @@ type XMLNode = XMLElement | XMLComment | XMLText;
 type XMLComment = null;
 interface XMLElement {
     tag: string;
+    expression: any;
     attributes: { [key: string]: { key: string; value: any; type: string } }
     nodes: XMLNode[]
 }
-interface XMLText { text: string }
+
+interface XMLText {
+    text: string
+}

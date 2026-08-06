@@ -3,7 +3,7 @@ import type { BaseComponent } from "../../components/base";
 import type { ExpressionComponent } from "../../components/expression";
 import type { HTMLElementComponent } from "../../components/html";
 import type { HTMLTextComponent } from "../../components/text";
-import type { ComponentController, ComponentControllerConstructor } from "../controllers/component";
+import type { ComponentController } from "../controllers/component";
 import type { Expression, Statement } from "moderate-code-interpreter/dist/types";
 
 export interface ScriptBoundConfig {
@@ -13,25 +13,16 @@ export interface ScriptBoundConfig {
     components?: ComponentsDictionary;
 }
 
-export type ComponentASTNode = ListComponentASTNode | BaseComponentASTNode | ExpressionASTNode | TextASTNode | HTMLElementASTNode;
+export type ComponentASTNode = ExpressionASTNode | TextASTNode | ElementASTNode;
 
-export interface BaseComponentASTNode {
-    type: 'base';
-    component: ComponentClass;
-    attributes: NodeAttributes;
+export interface ElementASTNode {
+    type: 'element';
+    tag: string;
     events: Lifecycles;
+    expression?: Runnable;
+    attributes: NodeAttributes;
     settings?: AttributeValue;
     content: ComponentASTNode[];
-}
-
-export interface ListComponentASTNode {
-    type: 'list';
-    component: ComponentClass;
-    attributes: NodeAttributes;
-    events: Lifecycles;
-    settings?: AttributeValue;
-    content: ComponentASTNode;
-    repeat: true;
 }
 
 export interface ExpressionASTNode {
@@ -39,17 +30,6 @@ export interface ExpressionASTNode {
     attributes?: never;
     expression: Runnable;
     settings?: AttributeValue;
-    component: ComponentClass;
-}
-
-export interface HTMLElementASTNode {
-    type: 'html';
-    tag: string;
-    attributes: NodeAttributes;
-    settings?: AttributeValue;
-    content: ComponentASTNode[];
-    additional: NodeAttributes;
-    component: ComponentClass;
 }
 
 export interface TextASTNode {
@@ -57,10 +37,9 @@ export interface TextASTNode {
     attributes?: never;
     settings?: AttributeValue;
     text: string;
-    component: ComponentClass;
 }
 
-export type NodeAttributes = Bindable & ConditionalEdit & ConditionalShow & QuerySelectors & Settings;
+export type NodeAttributes = Bindable & ConditionalEdit & QuerySelectors & Settings;
 
 export type ComponentSettings = {}
 
@@ -72,11 +51,7 @@ export interface Lifecycles {
 }
 
 export interface Bindable {
-    scope?: AttributeValue;
-}
-
-export interface ConditionalShow {
-    if?: AttributeValue;
+    $?: AttributeValue;
 }
 
 export interface ConditionalEdit {
@@ -112,11 +87,6 @@ export interface ComponentsDictionary {
 }
 
 export interface ComponentClass {
-    Attributes: {
-        group?: string;
-        default?: boolean;
-        repeat?: boolean;
-    }
     new(component: ComponentController<any>): BaseComponent<any> | ExpressionComponent | HTMLElementComponent | HTMLTextComponent;
 }
 
@@ -126,11 +96,11 @@ export interface ComponentRegistry {
 }
 export type ValueType<T> = T[keyof T]
 
-export type AttributeValue = { type: 'json', value: JSONLike } | { type: 'script', value: Runnable };
+export type AttributeValue = { type: 'json', value: JSONLike } | { type: 'script', value: Runnable, binding?: boolean };
 
 
 export type Runnable = { statements: Statement[] } | { expression: Expression };
-
+export type BindExpression = { expression: Expression };
 export type JSONLike = string | number | boolean | JSONLikeObject | JSONLike[];
 
 export interface JSONLikeObject {

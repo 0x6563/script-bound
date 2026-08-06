@@ -28,7 +28,10 @@ lexer {
 
 	[attributes]
 		- when "/>" pop
+		- when "..." tag "spread"
+		- when "$" tag "word" highlight "attribute.name"
 		- when r:{[a-z_A-Z:!][a-z_A-Z\d\-:!]*} tag "word" highlight "attribute.name"
+		- when "&="
 		- when "="
 		- when "(" goto MC_root
 		- import json
@@ -99,13 +102,15 @@ grammar {
 		| "<" "(" _ MC_Body@script _ ")" ">" => ( { literal: $script }  )
 
 	[Element]
-		| "<" ElementHead _ ">" _ XMLPlus _ "</" <word> ">" => ( { tag: $1.tag, attributes: $1.attributes , nodes: $5.nodes} )
-		| "<" ElementHead _ "/>" => ( { tag: $1.tag, attributes: $1.attributes, nodes:[] } )
-		| "<" ElementHead _ ">" _ "</" <word> ">" => ( { tag: $1.tag, attributes: $1.attributes , nodes: [] } )
+		| "<" ElementHead _ ">" _ XMLPlus _ "</" <word> ">" => ( { tag: $1.tag, expression: $1.expression, attributes: $1.attributes , nodes: $5.nodes} )
+		| "<" ElementHead _ "/>" => ( { tag: $1.tag, expression: $1.expression, attributes: $1.attributes, nodes:[] } )
+		| "<" ElementHead _ ">" _ "</" <word> ">" => ( { tag: $1.tag, expression: $1.expression, attributes: $1.attributes , nodes: [] } )
 
 	[ElementHead]
-		| <word> __ XMLPlusAttributes => ( { tag: $0.value, attributes: $2 } )
 		| <word> => ( { tag: $0.value, attributes: [] } )
+		| <word> __ XMLPlusAttributes => ( { tag: $0.value, attributes: $2 } )
+		| <word> __ XMLPlusAttributes _ "(" _ MC_Body _ ")" => ( { tag: $0.value, attributes: $2, expression: $6 } )
+		| <word> _ "(" _ MC_Body _ ")" => ( { tag: $0.value , expression: $4 } )
 
 	[Script]
 		| "<" ScriptHead _ ">" _ MC_Body _ "</" "script" ">" => ( { tag: $1.tag, attributes: $1.attributes , nodes: [$5]} )
@@ -124,6 +129,8 @@ grammar {
 		| <word> "=" JSON => ( { key: $0.value, value: $2, type: 'json' } )
 		| <word> => ( { key: $0.value , value: '', type: 'json' } )
 		| <word> "=" "(" _ MC_Body _ ")" => ( { key:$0.value , value: $4, type: 'script' } )
+		| <word> "&=" "(" _ MC_Body _ ")" => ( { key:$0.value , value: $4, type: 'script', binding: true } )
+		| <spread> "=" Object => ( { key: '...', value: $2, type: 'spread' } )
 
 	[JSON] => ( $0 )
 		| Object

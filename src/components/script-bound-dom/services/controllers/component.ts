@@ -1,202 +1,160 @@
-import type { ComponentAttributesDictionary, ComponentASTNode, ComponentSettings, ListComponentASTNode, ComponentsDictionary, ValueType, Lifecycles } from '../types/types';
+import type { ComponentAttributesDictionary, ComponentASTNode, Lifecycles, Runnable, ElementASTNode, AttributeValue, ComponentsDictionary, } from '../types/types';
 import type { ApplicationController } from './application';
-import type { BaseComponent } from '../../components/base';
 import type { DOMNodeLike, ElementNodeLike } from '../elements';
+import type { BaseComponent } from '../../components/base';
 import { DataController } from './data';
 import { AttributeController } from './attribute';
+import { SymbolExpression, SymbolText } from '../../components/registry';
 
-export class ComponentController<T extends ComponentASTNode = ComponentASTNode, T2 extends ComponentSettings = {}> {
+export class ComponentController<T extends ComponentASTNode = ComponentASTNode> {
     node: T;
-    scope: DataController;
+    dataController!: DataController;
     application: ApplicationController;
     attributes: ComponentAttributesDictionary = {};
-    additional: ComponentAttributesDictionary = {};
-    get settings(): T2 {
-        return this.attributes.settings?.value
-    };
+    children: Set<ComponentController> = new Set();
+    refNode: DOMNodeLike;
+    parent: ComponentController;
+    componentDictionary?: ComponentsDictionary;
 
-    private parent?: ComponentController;
-    private subcomponents: ComponentController[] = [];
-    private owns: DataController[] = [];
-    private component: ValueType<ComponentsDictionary>;
-    private componentInstance?: InstanceType<ComponentController['component']>;
+    private componentInstance: BaseComponent;
     private events: Lifecycles;
-
-    private elements?: DOMNodeLike[];
     private dataListener;
-    private state = {
-        connected: false,
-        enabled: false,
-        locked: false,
-        unlocked: false
-    }
 
 
     constructor(parameters: ComponentControllerConstructor) {
-        let addListener = false;
         if ('parent' in parameters) {
             this.parent = parameters.parent;
-            this.scope = this.parent.scope;
             this.application = this.parent.application;
+            this.refNode = parameters.refNode;
         } else {
-            this.scope = parameters.data;
+            this.parent = { dataController: parameters.data, application: parameters.application, componentDictionary: parameters.application.components } as unknown as ComponentController;
             this.application = parameters.application;
+            this.refNode = this.application.createComment('');
+            parameters.parentNode.appendChild(this.refNode);
+        }
+        this.node = parameters.node as T;
+        if (this.node.type == 'expression') {
+            this.componentInstance = new (this.application.getComponent(SymbolExpression))(this) as BaseComponent;
+        } else if (this.node.type == 'text') {
+            this.componentInstance = new (this.application.getComponent(SymbolText))(this) as BaseComponent;
+        } else {
+            const componentClass = this.parent.componentDictionary?.[this.node.tag] || this.application.getComponent(this.node.tag);
+            this.componentInstance = new componentClass(this) as BaseComponent;
         }
 
-        this.node = parameters.node as T;
+        this.componentInstance.initialize();
+
         this.events = 'events' in this.node ? this.node.events : {};
         if (this.node.attributes) {
-            if (this.node.attributes.scope) {
-                this.attributes.scope = new AttributeController<string>({
-                    data: this.scope,
-                    attribute: this.node.attributes.scope,
-                });
-
-                this.scope = this.scope.fork(this.attributes.scope.value);
-                this.owns.push(this.scope);
-                addListener = true;
-            }
-
             for (const key in this.node.attributes) {
-                if (key !== 'scope') {
-                    this.attributes[key] = new AttributeController({ data: this.scope, attribute: this.node.attributes[key] });
-                }
+                this.attributes[key] = new AttributeController({ data: this.dataController, attribute: this.node.attributes[key] });
             }
-
-        }
-        if ('additional' in this.node) {
-            for (const key in this.node.additional) {
-                this.additional[key] = new AttributeController({ data: this.scope, attribute: this.node.additional[key] });
-            }
-
         }
 
-        this.attributes.if = this.attributes.if || new AttributeController({ data: this.scope, attribute: { type: 'json', value: true } });
-
-        this.component = this.node.component;
-        addListener = addListener || this.node.type == 'expression';
+        const addListener = this.dataController !== this.parent.dataController || this.node.type == 'expression';
         if (addListener) {
             this.dataListener = () => this.onDataChanges();
-            this.scope.changes.addEventListener(this.dataListener);
+            this.dataController.changes.addEventListener(this.dataListener);
         }
 
         if (this.events.load)
-            this.scope.runScript(this.events.load)
-    }
+            this.dataController.runScript(this.events.load)
 
-    connect(): DOMNodeLike[] {
-        if (this.state.connected)
-            throw Error('Connect should not be called more than once');
+        let initial = this.componentInstance!.connect();
 
-        this.state.connected = true;
-        return this.render();
+        if (!initial?.length) {
+            initial = [this.application.createComment('')];
+        }
+
+        const endcap = initial[initial.length - 1];
+        this.append(initial);
+        if (!('refNode' in parameters)) {
+            this.refNode.remove();
+        }
+        this.refNode = endcap;
+
+        if ('expression' in this.node && this.node.expression) {
+            this.componentInstance?.update('', '');
+        }
     }
 
     disconnect() {
-        this.disable();
-        for (const owned of this.owns) {
-            owned.disconnect();
-        }
+        this.componentInstance?.disconnect();
+        this.refNode.remove();
+        if (this.dataListener)
+            this.dataController.changes.removeEventListener(this.dataListener);
+        if (this.dataController !== this.parent.dataController)
+            this.dataController.disconnect();
     }
 
     eventHandler(e: { event: string, value: any }) {
         if (e.event == 'update') {
-            this.scope.value = e.value;
+            this.dataController.value = e.value;
         }
 
         if (e.event == 'action') {
             if (this.events.action) {
-                this.scope.runScript(this.events.action);
+                this.dataController.runScript(this.events.action);
             }
         }
 
     }
-
     htmlAttributes() {
         const attributes = {};
 
-        for (const key in this.additional) {
-            attributes[key] = this.additional[key].value;
-        }
-
-        if (this.attributes.id) {
-            attributes['id'] = this.attributes.id.value;
-        }
-        if (this.attributes.class) {
-            attributes['class'] = this.attributes.class.value;
+        for (const key in this.attributes) {
+            attributes[key] = this.attributes[key].value;
         }
         return attributes;
     }
 
-    private render() {
-        try {
-            if (this.attributes.if!.value) {
-                this.enable();
-                this.elements = this.componentInstance?.connect(this.subcomponents as []) as DOMNodeLike[];
-            } else {
-                this.disable();
-                this.elements = [this.placeholder()];
+
+    createChildren(config: { content?: ComponentASTNode[], refNode?: DOMNodeLike, scope?: AttributeValue } = {}): ComponentController[] {
+        const content: ComponentASTNode[] = config.content || (this.node as ElementASTNode).content;
+        const refNode: DOMNodeLike = config.refNode || this.refNode;
+        const scope: AttributeValue | undefined = config.scope;
+        const components: ComponentController[] = [];
+        for (const v of content) {
+            let node = v;
+            if (scope) {
+                node = {
+                    ...v,
+                    attributes: {
+                        ...v.attributes,
+                        $: scope
+                    }
+
+                } as ComponentASTNode
             }
-            return this.elements;
-        } catch (error) {
-            console.error(error);
-            return ErrorBox(this.application, (error as string) + `<br/><br/><br/>` + JSON.stringify(this.node, null, 2));
+            const controller = new ComponentController({ parent: this, refNode, node });
+            components.push(controller)
+            this.children.add(controller);
+        }
+        return components;
+    }
+
+    disconnectChildren() {
+        for (const child of this.children) {
+            this.disconnectChild(child);
         }
     }
+
+    disconnectChild(child: ComponentController) {
+        child.disconnect();
+        this.children.delete(child);
+    }
+
+    append(nodes: DOMNodeLike[]) {
+        for (const node of nodes) {
+            this.refNode.before(node)
+        }
+    }
+
     private onDataChanges() {
-        if (!this.state.connected)
-            return;
-
-        if (this.attributes.if) {
-            this.attributes.if.recheck();
-            const enable = this.attributes.if.value;
-            if (enable != this.state.enabled) {
-                const old = this.elements as DOMNodeLike[];
-                this.render();
-                const bookmark = old[0] as ElementNodeLike;
-                const parent = bookmark.parentNode as ElementNodeLike;
-
-                for (const element of this.elements as DOMNodeLike[]) {
-                    parent.insertBefore(element, bookmark);
-                }
-
-                for (const element of old) {
-                    parent.removeChild(element);
-                }
-            }
-        }
-
-        if (this.state.enabled) {
-            (this.componentInstance as BaseComponent).update('value', this.scope.value);
-        }
+        this.componentInstance.update('value', this.dataController.value);
     }
 
-    private enable() {
-        this.state.enabled = true;
-        this.componentInstance = new this.component(this as any);
-        if ((this.node as ListComponentASTNode).repeat) {
-            const content = (this.node as ListComponentASTNode).content;
-            if (Array.isArray(this.scope.value)) {
-                this.subcomponents = this.scope.value.map((_, scope) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, scope: { type: 'json', value: scope.toString() } } } as any }));
-            } else if (typeof this.scope.value == 'object') {
-                this.subcomponents = Object.keys(this.scope.value).map((scope) => new ComponentController({ parent: this, node: { ...content, attributes: { ...content.attributes, scope: { type: 'json', value: scope.toString() } } } as any }));
-            }
-        } else if ("content" in this.node && Array.isArray(this.node.content)) {
-            this.subcomponents = this.node.content.map(v => new ComponentController({ parent: this, node: v }));
-        }
-    }
 
-    private disable() {
-        this.state.enabled = false;
-
-        while (this.subcomponents.length) {
-            this.subcomponents.pop()?.disconnect();
-        }
-    }
-
-    private placeholder() {
-        return this.application.createComment('');
-    }
 }
 
 
@@ -220,7 +178,8 @@ export type ComponentControllerConstructor<T extends ComponentASTNode = Componen
     ComponentControllerContext<T> |
     {
         parent: ComponentController;
-        node: ComponentASTNode;
+        refNode: DOMNodeLike;
+        node: T;
     };
 
 export interface ComponentControllerContext<T extends ComponentASTNode> {
@@ -228,4 +187,6 @@ export interface ComponentControllerContext<T extends ComponentASTNode> {
     attributes: ComponentAttributesDictionary;
     data: DataController;
     node: T;
+    parentNode: ElementNodeLike;
+
 }

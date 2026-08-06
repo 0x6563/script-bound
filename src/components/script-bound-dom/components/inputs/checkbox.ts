@@ -2,15 +2,12 @@ import type { DOMNodeLike, ElementNodeLike } from "../../services/elements.ts";
 import { BaseComponent } from "../base.ts";
 
 export class Checkbox extends BaseComponent {
-    static Attributes = {
-        group: 'input'
-    }
 
     private input?: ElementNodeLike;
-    connect(subcomponents: []): DOMNodeLike[] {
+    connect(): DOMNodeLike[] {
         this.input = this.controller
             .application
-            .createNode('input', { type: 'checkbox', value: this.controller.scope.value }, { change: (v) => this.controller.eventHandler({ event: 'update', value: v }) });
+            .createNode('input', { type: 'checkbox', value: this.controller.dataController.value }, { change: (e) => this.controller.eventHandler({ event: 'update', value: e.target.checked }) });
         return [this.input];
     }
 

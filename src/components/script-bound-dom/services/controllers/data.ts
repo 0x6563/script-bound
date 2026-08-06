@@ -1,48 +1,62 @@
 import type { ApplicationController } from './application';
-import type { Runnable } from '../types/types';
+import type { AttributeValue, BindExpression, Runnable } from '../types/types';
 import { GetValueType, Unmarshal, Value } from 'moderate-code-interpreter';
-import { JSONPath } from 'jsonpath-plus';
 import { Events } from '../events';
+import type { ReferenceExpression } from 'moderate-code-interpreter/dist/types';
+
+const Unwrap = Symbol('unwrap');
 
 export class DataController {
     application: ApplicationController;
     parent?: DataController;
     meta: { [key: string]: any } = {};
+    local: { [key: string]: any } = {}
     scopes: { [key: string]: DataController };
     changes = new Events<undefined>();
 
     private children: Set<DataController> = new Set();
     private dataListener;
 
-    private $bind?: string;
-
-    get bind() {
-        return this.$bind;
-    }
-
     private $data: any;
+    private $bind?: BindExpression;
 
     get value() {
-        return this.resolvePath(this.$bind).value;
+        if (this.$bind) {
+            return this.parent!.runScript(this.$bind);
+        }
+        return this.$data;
     }
 
     set value(value: any) {
-        const { parent, parentProperty } = this.resolvePath(this.$bind);
-        if (parentProperty) {
-            parent[parentProperty] = value;
+        if (this.$bind) {
+            this.parent!.assign(this.$bind.expression as ReferenceExpression, value);
+        } else {
+            this.$data = value;
         }
     }
 
+    assign(reference: ReferenceExpression, value: any) {
+        const o = this.proxy();
+        o['#value'] = ValueProxy(value);
+        this.application.runScript(o, {
+            statements: [{
+                type: 'assignment',
+                reference,
+                value: { type: 'reference', path: [{ type: 'word', value: '#value' }] }
+            }]
+        });
+    }
+
     constructor({ application, meta, data, scopes, bind }: DataControllerConstructor) {
-        this.$bind = bind;
         this.$data = data;
-        this.scopes = { ...scopes, root: scopes?.root || this, relative: scopes?.relative || this }
+        this.$bind = bind;
+        this.scopes = { ...scopes }
+        this.scopes.root = scopes?.root || this;
+        this.scopes.relative = scopes?.relative || this;
         this.parent = this.scopes.parent;
         this.application = application;
         if (meta) {
             this.meta = meta;
-        } else {
-            this.meta.path = this.$bind;
         }
         this.dataListener = () => this.changes.emit(undefined);
         this.application.watch(this.$data, this.dataListener)
@@ -53,15 +67,14 @@ export class DataController {
         this.scopes.parent?.children.delete(this);
     }
 
-    fork(bind: string) {
-        const scope = PathResolver.IsMetaPath(bind) ? { data: this.$data, meta: this.meta } : { data: this.value };
+    fork(bind: AttributeValue) {
         const context = new DataController({
-            ...scope,
+            data: bind.type == 'script' ? this.value : bind.value,
             scopes: {
                 ...this.scopes,
                 parent: this
             },
-            bind: bind,
+            bind: bind.type == 'script' ? bind.value as BindExpression : undefined,
             application: this.application
         });
         this.children.add(context);
@@ -79,34 +92,35 @@ export class DataController {
 
     runScript(script: Runnable) {
         const o = this.proxy();
-        return this.application.runScript(o, script);
-    }
-
-    private resolvePath(path: string = '$'): Result {
-        if (PathResolver.IsScopePath(path))
-            return this.scopes[path.slice(1, path.indexOf('.'))].resolvePath(path.slice(path.indexOf('.') + 1));
-
-        if (PathResolver.IsMetaPath(path)) {
-            return PathResolver.Resolve(this.meta, path.slice(1));
-        }
-        return PathResolver.Resolve(this.$data, path);
+        const result = this.application.runScript(o, script);
+        const kind = GetValueType(result);
+        return (kind == 'object' || kind == 'array') ? (result as any)?.[Unwrap] : result;
     }
 }
 
 function ContextProxy(source: DataController) {
     const p = Value('object', new Proxy(source, {
         get(target, key) {
+            if (key === Unwrap)
+                return target;
+
             if (typeof key == 'symbol')
-                return target[key];
-            if (PathResolver.IsScopePath(key as string)) {
+                return (target as any)[key];
+
+            if (PathResolver.IsScopePath(key as string))
                 return ContextProxy(source.scopes[(key as string).slice(1)])
-            } else if (PathResolver.IsMetaPath(key as string)) {
+
+            if (PathResolver.IsMetaPath(key as string))
                 return ValueProxy(target.meta[(key as string).slice(1)])
-            } else if (key == '$') {
+
+            if (PathResolver.IsLocalPath(key as string))
+                return ValueProxy(target.local[(key as string).slice(1)])
+
+            if (key == '$')
                 return ValueProxy(target.value);
-            } else {
-                return ValueProxy(target.value[key])
-            }
+
+            return ValueProxy(target.value[key])
+
         },
         ownKeys(target) {
             return Object.keys(target.value);
@@ -118,6 +132,7 @@ function ContextProxy(source: DataController) {
     return p;
 }
 
+
 function ValueProxy(source) {
     const srctype = GetValueType(source);
     if (srctype == 'object' || srctype == 'array')
@@ -128,12 +143,14 @@ function ValueProxy(source) {
 function ObjectProxy(source: object | any[]) {
     const p = new Proxy(source, {
         get(target, key) {
+            if (key === Unwrap)
+                return target;
             if (typeof key == 'symbol')
-                return target[key];
+                return (target as any)[key];
             return ValueProxy(target[key])
         },
         set(target, key, value) {
-            return target[key] = Unmarshal(value);
+            return !!(target[key] = Unmarshal(value));
         },
         ownKeys(target) {
             return Object.keys(target);
@@ -152,19 +169,20 @@ class PathResolver {
         return /^\$[a-z\d]+/i.test(path);
     }
 
+    static IsLocalPath(path: string = '$') {
+        return /^#[a-z\d]+/i.test(path);
+    }
+
     static IsMetaPath(path: string = '$') {
         return (/^@[a-z\d]+/i.test(path));
     }
-
-    static Resolve(json: any, path: string, resultType: 'value' | 'path' | 'pointer' | 'parent' | 'parentProperty' | 'all' = 'all') {
-        return JSONPath({ path, json, resultType, wrap: false });
-    }
 }
+
 
 export interface DataControllerConstructor {
     application: ApplicationController;
     data: any;
-    bind?: string;
+    bind?: BindExpression;
     scopes?: {
         [key: string]: DataController;
     }

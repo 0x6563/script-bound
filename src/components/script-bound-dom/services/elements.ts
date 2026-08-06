@@ -1,18 +1,28 @@
 export function CreateElementNode(type: string): ElementNodeLike {
-    return document.createElement(type) as ElementNodeLike;
+    return document.createElement(type) as unknown as ElementNodeLike;
 }
 
 export function CreateTextNode(text: string): TextNodeLike {
-    return document.createTextNode(text);
+    return document.createTextNode(text) as unknown as TextNodeLike;
 }
 
 export function CreateCommentNode(comment: string): TextNodeLike {
-    return document.createComment(comment);
+    return document.createComment(comment) as unknown as TextNodeLike;
+}
+
+export function CreateFragment(): ElementNodeLike {
+    return document.createDocumentFragment() as unknown as ElementNodeLike;
 }
 
 export class VirtualElement implements ElementNodeLike {
-    innerHTML: string = '';
     parentNode: ElementNodeLike | null = null;
+
+    get innerHTML(): string {
+        throw new Error("Method not implemented.");
+    }
+    set innerHTML(s: string) {
+        throw new Error("Method not implemented.");
+    }
 
     constructor(private type: string) { }
 
@@ -37,6 +47,15 @@ export class VirtualElement implements ElementNodeLike {
     removeChild(element: DOMNodeLike): void {
         throw new Error("Method not implemented.");
     }
+    before(element: DOMNodeLike): DOMNodeLike {
+        throw new Error("Method not implemented.");
+    }
+    after(element: DOMNodeLike): DOMNodeLike {
+        throw new Error("Method not implemented.");
+    }
+    remove(): void {
+        throw new Error("Method not implemented.");
+    }
     toString(): string {
         throw new Error("Method not implemented.");
     }
@@ -46,6 +65,10 @@ export type DOMNodeLike = TextNodeLike | ElementNodeLike;
 
 export interface TextNodeLike {
     textContent: string | null;
+    parentNode: null | ElementNodeLike;
+    before(element: DOMNodeLike): DOMNodeLike;
+    after(element: DOMNodeLike): DOMNodeLike;
+    remove(): void;
 }
 
 export interface ElementNodeLike {
@@ -57,6 +80,8 @@ export interface ElementNodeLike {
     removeAttribute(key: string): void;
     appendChild(element: DOMNodeLike): void;
     removeChild(element: DOMNodeLike): void;
-    insertBefore(element: DOMNodeLike, reference: DOMNodeLike);
+    before(element: DOMNodeLike): DOMNodeLike;
+    after(element: DOMNodeLike): DOMNodeLike;
+    remove(): void;
     toString(): string;
 }

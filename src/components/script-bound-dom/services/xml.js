@@ -64,13 +64,15 @@ class grammar {
                     { name: "Array", postprocess: ({data}) => { return (data[2]); }, symbols: [ { literal: "[" }, "_", "JSON_list", "_", { literal: "]" } ] }
                 ],
                 Element: [
-                    { name: "Element", postprocess: ({data}) => { return ({ tag: data[1].tag, attributes: data[1].attributes , nodes: data[5].nodes}); }, symbols: [ { literal: "<" }, "ElementHead", "_", { literal: ">" }, "_", "XMLPlus", "_", { literal: "</" }, { token: "word" }, { literal: ">" } ] },
-                    { name: "Element", postprocess: ({data}) => { return ({ tag: data[1].tag, attributes: data[1].attributes, nodes:[] }); }, symbols: [ { literal: "<" }, "ElementHead", "_", { literal: "/>" } ] },
-                    { name: "Element", postprocess: ({data}) => { return ({ tag: data[1].tag, attributes: data[1].attributes , nodes: [] }); }, symbols: [ { literal: "<" }, "ElementHead", "_", { literal: ">" }, "_", { literal: "</" }, { token: "word" }, { literal: ">" } ] }
+                    { name: "Element", postprocess: ({data}) => { return ({ tag: data[1].tag, expression: data[1].expression, attributes: data[1].attributes , nodes: data[5].nodes}); }, symbols: [ { literal: "<" }, "ElementHead", "_", { literal: ">" }, "_", "XMLPlus", "_", { literal: "</" }, { token: "word" }, { literal: ">" } ] },
+                    { name: "Element", postprocess: ({data}) => { return ({ tag: data[1].tag, expression: data[1].expression, attributes: data[1].attributes, nodes:[] }); }, symbols: [ { literal: "<" }, "ElementHead", "_", { literal: "/>" } ] },
+                    { name: "Element", postprocess: ({data}) => { return ({ tag: data[1].tag, expression: data[1].expression, attributes: data[1].attributes , nodes: [] }); }, symbols: [ { literal: "<" }, "ElementHead", "_", { literal: ">" }, "_", { literal: "</" }, { token: "word" }, { literal: ">" } ] }
                 ],
                 ElementHead: [
+                    { name: "ElementHead", postprocess: ({data}) => { return ({ tag: data[0].value, attributes: [] }); }, symbols: [ { token: "word" } ] },
                     { name: "ElementHead", postprocess: ({data}) => { return ({ tag: data[0].value, attributes: data[2] }); }, symbols: [ { token: "word" }, "__", "XMLPlusAttributes" ] },
-                    { name: "ElementHead", postprocess: ({data}) => { return ({ tag: data[0].value, attributes: [] }); }, symbols: [ { token: "word" } ] }
+                    { name: "ElementHead", postprocess: ({data}) => { return ({ tag: data[0].value, attributes: data[2], expression: data[6] }); }, symbols: [ { token: "word" }, "__", "XMLPlusAttributes", "_", { literal: "(" }, "_", "MC_Body", "_", { literal: ")" } ] },
+                    { name: "ElementHead", postprocess: ({data}) => { return ({ tag: data[0].value , expression: data[4] }); }, symbols: [ { token: "word" }, "_", { literal: "(" }, "_", "MC_Body", "_", { literal: ")" } ] }
                 ],
                 JSON: [
                     { name: "JSON", postprocess: ({data}) => { return (data[0]); }, symbols: [ "Object" ] },
@@ -341,7 +343,7 @@ class grammar {
                     { name: "MC_Prop", postprocess: ({data}) => { return ({ key: data[0], value: { type: TYPES.Reference, path: data[0] } }); }, symbols: [ "MC_Word" ] }
                 ],
                 MC_PropName: [
-                    { name: "MC_PropName", postprocess: ({data}) => { return (data[0]); }, symbols: [ "MC_String" ] },
+                    { name: "MC_PropName", postprocess: ({data}) => { return (data[0].value); }, symbols: [ "MC_String" ] },
                     { name: "MC_PropName", postprocess: ({data}) => { return (data[0]); }, symbols: [ "MC_Word" ] }
                 ],
                 MC_Prop_list: [
@@ -486,7 +488,7 @@ class grammar {
                 Node: [
                     { name: "Node", postprocess: ({data}) => { return (data[0]); }, symbols: [ "Element" ] },
                     { name: "Node", postprocess: ({data}) => { return (data[0]); }, symbols: [ "Script" ] },
-                    { name: "Node", postprocess: ({data}) => { return ({ text: data[0].map(v=>v.value).join('') }); }, symbols: [ "Node.RPT1Nx1" ] },
+                    { name: "Node", postprocess: ({data}) => { return ({ text: data[0].map(v => v.value).join('') }); }, symbols: [ "Node.RPT1Nx1" ] },
                     { name: "Node", postprocess: ({data}) => { return (null); }, symbols: [ { literal: "<!--" }, { token: "text" }, { literal: "-->" } ] },
                     { name: "Node", postprocess: ({data}) => { return ({ literal: data[3] }); }, symbols: [ { literal: "<" }, { literal: "(" }, "_", "MC_Body", "_", { literal: ")" }, { literal: ">" } ] }
                 ],
@@ -531,7 +533,9 @@ class grammar {
                 XMLPlusAttr: [
                     { name: "XMLPlusAttr", postprocess: ({data}) => { return ({ key: data[0].value, value: data[2], type: 'json' }); }, symbols: [ { token: "word" }, { literal: "=" }, "JSON" ] },
                     { name: "XMLPlusAttr", postprocess: ({data}) => { return ({ key: data[0].value , value: '', type: 'json' }); }, symbols: [ { token: "word" } ] },
-                    { name: "XMLPlusAttr", postprocess: ({data}) => { return ({ key:data[0].value , value: data[4], type: 'script' }); }, symbols: [ { token: "word" }, { literal: "=" }, { literal: "(" }, "_", "MC_Body", "_", { literal: ")" } ] }
+                    { name: "XMLPlusAttr", postprocess: ({data}) => { return ({ key:data[0].value , value: data[4], type: 'script' }); }, symbols: [ { token: "word" }, { literal: "=" }, { literal: "(" }, "_", "MC_Body", "_", { literal: ")" } ] },
+                    { name: "XMLPlusAttr", postprocess: ({data}) => { return ({ key:data[0].value , value: data[4], type: 'script', binding: true }); }, symbols: [ { token: "word" }, { literal: "&=" }, { literal: "(" }, "_", "MC_Body", "_", { literal: ")" } ] },
+                    { name: "XMLPlusAttr", postprocess: ({data}) => { return ({ key: '...', value: data[2], type: 'spread' }); }, symbols: [ { token: "spread" }, { literal: "=" }, "Object" ] }
                 ],
                 XMLPlusAttributes: [
                     { name: "XMLPlusAttributes", postprocess: ({data}) => { return ({ [data[0].key] : data[0] }); }, symbols: [ "XMLPlusAttr" ] },
@@ -713,10 +717,13 @@ class grammar {
                     ]
                 },
                 attributes: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null))))/ym,
+                    regex: /(?:(?:((?:\/>)))|(?:((?:\.\.\.)))|(?:((?:\$)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:&=)))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null))))/ym,
                     rules: [
                         { pop: 1, when: "/>" },
+                        { tag: ["spread"], when: "..." },
+                        { highlight: "attribute.name", tag: ["word"], when: "$" },
                         { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
+                        { when: "&=" },
                         { when: "=" },
                         { goto: "MC_root", when: "(" },
                         { tag: ["space"], when: /\s+/ },
@@ -894,10 +901,13 @@ class grammar {
                     ]
                 },
                 scriptHeadTag: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
+                    regex: /(?:(?:((?:\/>)))|(?:((?:\.\.\.)))|(?:((?:\$)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:&=)))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
                     rules: [
                         { pop: 1, when: "/>" },
+                        { tag: ["spread"], when: "..." },
+                        { highlight: "attribute.name", tag: ["word"], when: "$" },
                         { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
+                        { when: "&=" },
                         { when: "=" },
                         { goto: "MC_root", when: "(" },
                         { tag: ["space"], when: /\s+/ },
@@ -916,10 +926,13 @@ class grammar {
                     ]
                 },
                 stdHeadTag: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
+                    regex: /(?:(?:((?:\/>)))|(?:((?:\.\.\.)))|(?:((?:\$)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:&=)))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
                     rules: [
                         { pop: 1, when: "/>" },
+                        { tag: ["spread"], when: "..." },
+                        { highlight: "attribute.name", tag: ["word"], when: "$" },
                         { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
+                        { when: "&=" },
                         { when: "=" },
                         { goto: "MC_root", when: "(" },
                         { tag: ["space"], when: /\s+/ },
@@ -945,10 +958,13 @@ class grammar {
                     unmatched: { tag: ["text"] }
                 },
                 styleHeadTag: {
-                    regex: /(?:(?:((?:\/>)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
+                    regex: /(?:(?:((?:\/>)))|(?:((?:\.\.\.)))|(?:((?:\$)))|(?:([a-z_A-Z:!][a-z_A-Z\d\-:!]*))|(?:((?:&=)))|(?:((?:=)))|(?:((?:\()))|(?:(\s+))|(?:(-?(?:[0-9]|[1-9][0-9]+)(?:\.[0-9]+)?(?:[eE][-+]?[0-9]+)?\b))|(?:("))|(?:((?:\{)))|(?:((?:\})))|(?:((?:\[)))|(?:((?:\])))|(?:((?:,)))|(?:((?::)))|(?:((?:true)))|(?:((?:false)))|(?:((?:null)))|(?:((?:>))))/ym,
                     rules: [
                         { pop: 1, when: "/>" },
+                        { tag: ["spread"], when: "..." },
+                        { highlight: "attribute.name", tag: ["word"], when: "$" },
                         { highlight: "attribute.name", tag: ["word"], when: /[a-z_A-Z:!][a-z_A-Z\d\-:!]*/ },
+                        { when: "&=" },
                         { when: "=" },
                         { goto: "MC_root", when: "(" },
                         { tag: ["space"], when: /\s+/ },

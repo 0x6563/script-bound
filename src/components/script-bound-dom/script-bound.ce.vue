@@ -5,6 +5,7 @@ import { ApplicationController } from './services/controllers/application.ts';
 import { onMounted, ref } from 'vue';
 import { ComponentController } from './services/controllers/component.ts';
 import { AttributeController } from './services/controllers/attribute.ts';
+import type { ElementNodeLike } from './services/elements.ts';
 
 interface ComponentProps {
   data: any;
@@ -19,12 +20,7 @@ const application = new ApplicationController(props.config, props.data);
 const data = new DataController({ application, data: application.data });
 onMounted(() => {
   const lock = new AttributeController({ data, attribute: { type: 'json', value: false } });
-  const component = new ComponentController({ application, data, node: props.config.layout[0], attributes: { lock } });
-  const doms = component.connect();
-  for (const dom of doms) {
-    container.value?.appendChild(dom as any)
-  }
-
+  const component = new ComponentController({ application, data, node: props.config.layout[0], attributes: { lock }, parentNode: container.value as unknown as ElementNodeLike});
   (styletag.value as any).innerHTML = props.config?.style;
 });
 </script>

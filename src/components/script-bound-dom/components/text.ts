@@ -1,23 +1,12 @@
 import type { DOMNodeLike, TextNodeLike } from "../services/elements";
 import type { TextASTNode } from "../services/types/types";
-import { ComponentController, type ComponentControllerConstructor } from "../services/controllers/component";
+import { BaseComponent } from "./base";
 
-export class HTMLTextComponent {
-    static Attributes = {
-        class: '',
-        repeat: false
+export class HTMLTextComponent extends BaseComponent<TextASTNode> {
+
+    connect(): DOMNodeLike[] {
+        const node = this.controller.application.createText('');
+        node.textContent = this.controller.node.text;
+        return [node]
     }
-
-    node: TextNodeLike;
-
-    constructor(protected controller: ComponentController<TextASTNode>) {
-        this.node = this.controller.application.createText('');
-    }
-
-    connect(subcomponents: ComponentController[]): DOMNodeLike[] {
-        this.node.textContent = this.controller.node.text;
-        return [this.node]
-    }
-
-    disconnect(): void { };
 }
