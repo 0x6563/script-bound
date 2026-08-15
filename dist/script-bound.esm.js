@@ -2308,8 +2308,13 @@ var ScriptBoundElement = class extends HTMLElement {
     this.render();
   }
   connectedCallback() {
-    this.appendChild(this.container);
-    this.appendChild(this.styleTag);
+    if (this._source === void 0) {
+      const initial = this.textContent?.trim();
+      if (initial) {
+        this._source = initial;
+      }
+    }
+    this.replaceChildren(this.container, this.styleTag);
     this.render();
   }
   disconnectedCallback() {
