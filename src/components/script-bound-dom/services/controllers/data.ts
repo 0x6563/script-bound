@@ -36,8 +36,7 @@ export class DataController {
     }
 
     assign(reference: ReferenceExpression, value: any) {
-        const o = this.proxy();
-        o['#value'] = ValueProxy(value);
+        const o = this.proxy({ '#value': value });
         this.application.runScript(o, {
             statements: [{
                 type: 'assignment',
@@ -81,8 +80,13 @@ export class DataController {
         return context;
     }
 
-    proxy() {
+    proxy(extra?: { [key: string]: any }) {
         const r: any = {};
+        if (extra) {
+            for (const key in extra) {
+                r[key] = ValueProxy(extra[key]);
+            }
+        }
         for (const key in this.scopes) {
             r['$' + key] = ContextProxy(this.scopes[key]);
         }
@@ -90,8 +94,8 @@ export class DataController {
         return r;
     }
 
-    runScript(script: Runnable) {
-        const o = this.proxy();
+    runScript(script: Runnable, extra?: { [key: string]: any }) {
+        const o = this.proxy(extra);
         const result = this.application.runScript(o, script);
         const kind = GetValueType(result);
         return (kind == 'object' || kind == 'array') ? (result as any)?.[Unwrap] : result;

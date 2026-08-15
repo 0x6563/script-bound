@@ -10,8 +10,9 @@ on:
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+# and pushing the rebuilt component bundle back to the repo
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -35,14 +36,31 @@ jobs:
       - name: Install
         run: npm install
 
-      - name: Build
-        run: npm run build
+      - name: Build grammar
+        run: npm run build:grammar
+
+      - name: Build component
+        run: npm run build:standalone
+
+      - name: Commit component bundle if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add dist/ src/components/script-bound-dom/services/xml.js
+          if ! git diff --cached --quiet; then
+            git commit -m "chore: rebuild component bundle [skip ci]"
+            git push
+          fi
+
+      - name: Build demo
+        run: npm run build:demo
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "dist/"
+          path: "tmp/demo/"
 
       - name: Deploy to GitHub Pages
         id: deployment

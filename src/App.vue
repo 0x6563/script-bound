@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { watch, ref, reactive } from 'vue';
-import ScriptBound from './components/script-bound-dom/script-bound.ce.vue';
+import './components/script-bound-dom/script-bound.ts';
 import Code from './components/monaco.ce.vue';
 import Toggle from './components/toggle.vue';
 import SampleData from './samples/data.json';
@@ -62,7 +62,7 @@ function OnChange() {
       <h1>
         <Toggle :value="state.render" :options="['CST', 'AST', 'Data', 'Rendered',]" @change="state.render = $event" />
       </h1>
-      <ScriptBound v-if="state.render == 'Rendered' && state.config?.ast" :data=state.data :config=state.config.ast @change=OnChange />
+      <script-bound v-if="state.render == 'Rendered' && state.config?.ast" :data=state.data :source=configString @change=OnChange />
       <Code v-if="state.render == 'AST'" :value=state.config?.ast width="fill" height="fill" :readonly=true />
       <Code v-if="state.render == 'CST'" :value=state.config?.cst width="fill" height="fill" :readonly=true />
       <Code v-if="state.render == 'Data'" :value=dataString width="fill" height="fill" @edit="dataString = $event" />

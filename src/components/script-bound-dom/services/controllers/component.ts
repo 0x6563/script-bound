@@ -91,14 +91,16 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode> 
         if (e.event == 'update') {
             this.dataController.value = e.value;
         }
-
-        if (e.event == 'action') {
-            if (this.events.action) {
-                this.dataController.runScript(this.events.action);
-            }
-        }
-
     }
+
+    eventScript(type: string, event: any = {}) {
+        if (this.events[type]) {
+            this.dataController.runScript(this.events[type]);
+        }
+    }
+
+
+
     htmlAttributes() {
         const attributes = {};
 

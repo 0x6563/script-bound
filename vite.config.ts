@@ -6,9 +6,15 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/script-bound',
+  base: '/script-bound/demo/',
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          isCustomElement: (tag) => tag === 'script-bound',
+        },
+      },
+    }),
     vueDevTools(),
   ],
   resolve: {
@@ -17,6 +23,7 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: 'tmp/demo',
     target: 'esnext',
   },
   esbuild: {
