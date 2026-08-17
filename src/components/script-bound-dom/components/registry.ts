@@ -1,6 +1,5 @@
 import type { ComponentsDictionary } from '../services/types/types.ts';
-import { Textbox } from './inputs/textbox.ts';
-import { Checkbox } from './inputs/checkbox.ts';
+import { Input } from './inputs/input.ts';
 import { Single } from './lists/single.ts';
 import { Tabs } from './lists/tabs.ts';
 import { SelectComponent } from './inputs/select.ts';
@@ -18,10 +17,7 @@ export const SymbolText = Symbol('SymbolText');
 export const SymbolExpression = Symbol('SymbolText');
 
 export const ComponentsByName: ComponentsDictionary = {
-    textbox: Textbox as any,
-    text: Textbox as any,
-    input: Textbox as any,
-    checkbox: Checkbox as any,
+    input: Input as any,
     single: Single as any,
     tabs: Tabs as any,
     select: SelectComponent as any,

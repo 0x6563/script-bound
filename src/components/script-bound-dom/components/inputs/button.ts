@@ -1,8 +1,9 @@
+import type { DOMNodeLikeList } from "../../services/elements.ts";
 import { BaseComponent } from "../base.ts";
 
 export class Button extends BaseComponent {
 
-    connect() {
+    connect(): DOMNodeLikeList {
         const container = this.controller
             .application
             .createNode('button', this.controller.htmlAttributes(), { click: (e) => { this.controller.eventScript('click', null) } });

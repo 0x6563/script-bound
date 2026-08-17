@@ -1,4 +1,5 @@
 import type { DataController } from "./data";
+import type { ComponentController } from "./component";
 import type { AttributeValue, BindExpression } from "../types/types";
 import type { ReferenceExpression } from 'moderate-code-interpreter/dist/types';
 
@@ -6,6 +7,10 @@ export class AttributeController<T = any> {
     private data: DataController;
     private attribute: AttributeValue;
     private $value: T = undefined as any;
+    private controller?: ComponentController;
+    private name?: string;
+    private dataListener?: () => void;
+
     get value(): T { return this.$value; }
     set value(value: T) {
         if (this.attribute.type == 'script' && this.attribute.binding) {
@@ -15,20 +20,40 @@ export class AttributeController<T = any> {
     get binding(): boolean { return this.attribute.type == 'script' && !!this.attribute.binding; }
 
 
-    constructor({ attribute, data }: AttributeControllerConstructor) {
+    constructor({ attribute, data, controller, name }: AttributeControllerConstructor) {
         this.attribute = attribute ? attribute : { type: 'json', value: undefined as any };
 
         this.data = data;
-        if (this.attribute.type == 'json')
+        this.controller = controller;
+        this.name = name;
+        if (this.attribute.type == 'json') {
             this.$value = this.attribute.value as T;
-        else
+        } else {
             this.recheck();
+            if (this.binding) {
+                // Listen at $root: a bound attribute can reference any reachable scope
+                // (not just this.data's own), and root watches the whole data tree.
+                // Over-notifies, but never misses a real change.
+                this.dataListener = () => this.recheck();
+                this.data.scopes.root.changes.addEventListener(this.dataListener);
+            }
+        }
     }
 
     recheck() {
         if (this.attribute.type != 'script')
             return;
+        const old = this.$value;
         this.$value = this.data.runScript(this.attribute.value);
+        if (old !== this.$value && this.controller && this.name !== undefined) {
+            this.controller.update(this.name, old, this.$value);
+        }
+    }
+
+    disconnect() {
+        if (this.dataListener) {
+            this.data.scopes.root.changes.removeEventListener(this.dataListener);
+        }
     }
 
 }
@@ -36,4 +61,6 @@ export class AttributeController<T = any> {
 export interface AttributeControllerConstructor {
     data: DataController;
     attribute?: AttributeValue;
-} 
+    controller?: ComponentController;
+    name?: string;
+}

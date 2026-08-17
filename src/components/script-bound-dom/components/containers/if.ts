@@ -10,11 +10,19 @@ export class IfComponent extends BaseComponent<ElementASTNode> {
         super.initialize();
         if (this.controller.node.expression) {
             this.condition = this.controller.dataController.fork({ type: 'script', value: this.controller.node.expression });
-            this.condition.changes.addEventListener(() => this.update('', ''));
+            this.condition.changes.addEventListener(() => this.render());
         }
     }
 
-    update(type: string, value: any) {
+    afterConnect(): void {
+        this.render();
+    }
+
+    update(name: string, old: any, value: any) {
+        this.render();
+    }
+
+    private render() {
         const enable = !!this.condition?.value;
         if (enable != this.enabled) {
             this.enabled = enable;

@@ -4,18 +4,23 @@
         "lastName": "Doe"
     },
     "counter": 0,
+    "text": "",
+    "enabled": false,
+    "colors": ["red", "green", "blue"],
+    "selectedColor": "red",
+    "file": "",
     "giturl": "https://github.com/0x6563/",
     "html": "Data Defined <em style=\"color:blue;\">HTML</em>",
     "dependencies": [
         {
             "slug": "script-bound",
             "name": "Script Bound",
-            "description": "The framework rendering this very page - it turns XML-Plus templates into a live, reactive DOM."
+            "description": "The framework rendering this very page - it turns XML-like templates into a live, reactive DOM."
         },
         {
             "slug": "grammar-well",
             "name": "Grammar Well",
-            "description": "An Earley-based parser generator, compiling .well grammar files into JS parsers. Both XML-Plus and MCI's own script grammar are built with it."
+            "description": "An Earley-based parser generator, compiling .well grammar files into JS parsers. Both XML-like and MCI's own script grammar are built with it."
         },
         {
             "slug": "moderate-code-interpreter",

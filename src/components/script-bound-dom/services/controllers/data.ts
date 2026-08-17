@@ -126,6 +126,11 @@ function ContextProxy(source: DataController) {
             return ValueProxy(target.value[key])
 
         },
+        set(target, key, value) {
+            if (typeof key == 'symbol')
+                return false;
+            return !!(target.value[key] = Unmarshal(value));
+        },
         ownKeys(target) {
             return Object.keys(target.value);
         },

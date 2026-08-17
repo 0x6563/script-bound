@@ -1,4 +1,4 @@
-import type { ElementNodeLike } from "../../services/elements.ts";
+import type { DOMNodeLikeList, ElementNodeLike } from "../../services/elements.ts";
 import { PickOne } from '../../services/utility.ts';
 import { BaseComponent } from "../base.ts";
 
@@ -8,7 +8,7 @@ export class Tabs extends BaseComponent {
     private labels: ElementNodeLike[] = [];
     private items: ElementNodeLike[] = [];
 
-    connect() {
+    connect(): DOMNodeLikeList {
         const settings = this.controller.attributes.settings?.value as { side?: string } | undefined;
         const attributes = {
             'data-control': "list",

@@ -62,6 +62,7 @@ export class VirtualElement implements ElementNodeLike {
 }
 
 export type DOMNodeLike = TextNodeLike | ElementNodeLike;
+export type DOMNodeLikeList = [DOMNodeLike, ...DOMNodeLike[]];
 
 export interface TextNodeLike {
     textContent: string | null;

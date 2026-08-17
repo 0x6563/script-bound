@@ -1,10 +1,11 @@
 import { GetLayoutFlow } from "../../services/utility.ts";
+import type { DOMNodeLikeList } from "../../services/elements.ts";
 import { BaseComponent } from "../base.ts";
 
 export class Flow extends BaseComponent {
     attributes: { [key: string]: string } = {};
 
-    connect() {
+    connect(): DOMNodeLikeList {
         const { direction, wrap } = GetLayoutFlow(this.controller.attributes.settings?.value);
         const container = this.controller.application.createNode('div', {
             'data-flow': direction?.toString(),

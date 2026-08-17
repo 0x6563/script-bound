@@ -1,9 +1,9 @@
-import type { DOMNodeLike } from "../../services/elements.ts";
+import type { DOMNodeLikeList } from "../../services/elements.ts";
 import type { ApplicationController } from "../../services/controllers/application.ts";
 import { BaseComponent } from "../base.ts";
 
 export class DebugError extends BaseComponent {
-    connect(): DOMNodeLike[] {
+    connect(): DOMNodeLikeList {
         const container = this.controller.application.createNode('div');
         container.setAttribute('style', 'color:red');
 

@@ -6,16 +6,40 @@
     </flow>
     <br/>
     <hr/> 
-    <h1>Hello <($.personal.firstName)><if ($.personal.lastName)><span><( $.personal.lastName )></span></if>!</h1>
+    <h1>Hello <($.personal.firstName)><if ($.personal.lastName)> <span><( $.personal.lastName )></span></if>!</h1>
     <flow settings={"direction":"left-right"}>
         <button class="click">
-            <script event="action">
+            <script event="click">
                 $.counter = $.counter + 1;
             </script>
             Click this button
         </button>
         <h4 class="center">You've clicked that button <($.counter)> times!</h4>
     </flow>
+    <hr/>
+    <h4>Inputs</h4>
+    <table>
+        <tr>
+            <td><input type="text" value&=($.text)/></td>
+            <td><($.text)></td>
+        </tr>
+        <tr>
+            <td><input type="checkbox" value&=($.enabled)/></td>
+            <td><($.enabled)></td>
+        </tr>
+        <tr>
+            <td>
+                <for ($.colors)>
+                    <label><input type="radio" value&=($root.selectedColor)/> <($)></label>
+                </for>
+            </td>
+            <td><($.selectedColor)></td>
+        </tr>
+        <tr>
+            <td><input type="file" value&=($.file)/></td>
+            <td><($.file)></td>
+        </tr>
+    </table>
     <em>Powered by:</em>
     <flow settings={"direction":"left-right"}>
         <for ($.dependencies)>
@@ -63,6 +87,21 @@
     input:focus {
         outline: none;
         border-bottom: 2px solid blue;
+    }
+
+    table td {
+        padding: 4px 8px;
+        text-align: left;
+    }
+    table {
+        table-layout:fixed;
+        width: 100%;
+        td{
+            width: 35%;
+        }
+        tr td:last-child{
+            text-align: right;
+        }
     }
 
     [data-component="select"] {

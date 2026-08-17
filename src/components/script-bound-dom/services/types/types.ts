@@ -39,7 +39,7 @@ export interface TextASTNode {
     text: string;
 }
 
-export type NodeAttributes = Bindable & ConditionalEdit & QuerySelectors & Settings;
+export type NodeAttributes = Bindable & QuerySelectors;
 
 export type ComponentSettings = {}
 
@@ -54,20 +54,10 @@ export interface Bindable {
     $?: AttributeValue;
 }
 
-export interface ConditionalEdit {
-    lock?: AttributeValue;
-    unlock?: AttributeValue;
-}
-
 export interface QuerySelectors {
     id?: AttributeValue;
     class?: AttributeValue;
 }
-
-export interface Settings {
-    settings?: ComponentSettings;
-}
-
 export interface LayoutFlow {
     direction?: FlowDirection
     wrap?: boolean;
@@ -80,6 +70,8 @@ export type PositionalSide = 'left' | 'right' | 'bottom' | 'top';
 export type Component = BaseComponent;
 export type ComponentAttributesDictionary = {
     [key in keyof NodeAttributes]: AttributeController;
+} & {
+    [key: string]: AttributeController;
 };
 
 export interface ComponentsDictionary {

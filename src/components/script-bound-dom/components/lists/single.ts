@@ -1,8 +1,9 @@
+import type { DOMNodeLikeList } from "../../services/elements.ts";
 import { BaseComponent } from "../base.ts";
 
 export class Single extends BaseComponent {
 
-    connect() {
+    connect(): DOMNodeLikeList {
         const attributes = {
             'data-control': "list",
             'data-component': "single",

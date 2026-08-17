@@ -47,7 +47,7 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode> 
         this.events = 'events' in this.node ? this.node.events : {};
         if (this.node.attributes) {
             for (const key in this.node.attributes) {
-                this.attributes[key] = new AttributeController({ data: this.dataController, attribute: this.node.attributes[key] });
+                this.attributes[key] = new AttributeController({ data: this.dataController, attribute: this.node.attributes[key], controller: this, name: key });
             }
         }
 
@@ -60,31 +60,31 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode> 
         if (this.events.load)
             this.dataController.runScript(this.events.load)
 
-        let initial = this.componentInstance!.connect();
+        const initial = this.componentInstance!.connect();
 
-        if (!initial?.length) {
-            initial = [this.application.createComment('')];
-        }
-
-        const endcap = initial[initial.length - 1];
         this.append(initial);
         if (!('refNode' in parameters)) {
             this.refNode.remove();
         }
-        this.refNode = endcap;
+        this.refNode = initial[initial.length - 1];
 
-        if ('expression' in this.node && this.node.expression) {
-            this.componentInstance?.update('', '');
-        }
+        this.componentInstance.afterConnect();
     }
 
     disconnect() {
         this.componentInstance?.disconnect();
         this.refNode.remove();
+        for (const key in this.attributes) {
+            this.attributes[key].disconnect();
+        }
         if (this.dataListener)
             this.dataController.changes.removeEventListener(this.dataListener);
         if (this.dataController !== this.parent.dataController)
             this.dataController.disconnect();
+    }
+
+    update(name: string, old: any, value: any) {
+        this.componentInstance.update(name, old, value);
     }
 
     eventHandler(e: { event: string, value: any }) {
@@ -153,7 +153,7 @@ export class ComponentController<T extends ComponentASTNode = ComponentASTNode> 
     }
 
     private onDataChanges() {
-        this.componentInstance.update('value', this.dataController.value);
+        this.componentInstance.update('', undefined, this.dataController.value);
     }
 
 

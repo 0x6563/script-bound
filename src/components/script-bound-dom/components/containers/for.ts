@@ -10,7 +10,15 @@ export class ForComponent extends BaseComponent<ElementASTNode> {
         }
     }
 
-    update(type: string, value: any) {
+    afterConnect(): void {
+        this.render();
+    }
+
+    update(name: string, old: any, value: any) {
+        this.render();
+    }
+
+    private render() {
         const items = this.controller.dataController.value;
         if (this.cache == items) {
             return;
