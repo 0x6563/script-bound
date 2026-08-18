@@ -8,6 +8,10 @@ evaluated by [moderate-code-interpreter](https://github.com/0x6563/moderate-code
 It ships as `<script-bound>`, a native custom element with no framework dependency of
 its own - the Vue app in this repo (`npm run dev`) is just a demo/editor built around it.
 
+MCI itself is a placeholder - a basic toy interpreter standing in until it's replaced
+by a more capable runtime. Expect its syntax and semantics to be the least stable part
+of this stack.
+
 ## Usage
 
 As a plain custom element (data/source are set as JS properties, not string attributes):

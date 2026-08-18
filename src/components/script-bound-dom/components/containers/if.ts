@@ -5,12 +5,14 @@ import { BaseComponent } from "../base.ts";
 export class IfComponent extends BaseComponent<ElementASTNode> {
     enabled = false;
     private condition?: DataController;
+    private rootListener?: () => void;
 
     initialize(): void {
         super.initialize();
         if (this.controller.node.expression) {
             this.condition = this.controller.dataController.fork({ type: 'script', value: this.controller.node.expression });
-            this.condition.changes.addEventListener(() => this.render());
+            this.rootListener = () => this.render();
+            this.condition.scopes.root.changes.addEventListener(this.rootListener);
         }
     }
 
@@ -35,6 +37,9 @@ export class IfComponent extends BaseComponent<ElementASTNode> {
     }
 
     disconnect(): void {
+        if (this.rootListener) {
+            this.condition?.scopes.root.changes.removeEventListener(this.rootListener);
+        }
         this.condition?.disconnect();
     }
 }

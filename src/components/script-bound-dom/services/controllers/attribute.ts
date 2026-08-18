@@ -29,18 +29,15 @@ export class AttributeController<T = any> {
         if (this.attribute.type == 'json') {
             this.$value = this.attribute.value as T;
         } else {
-            this.recheck();
+            this.$value = this.data.runScript(this.attribute.value);
             if (this.binding) {
-                // Listen at $root: a bound attribute can reference any reachable scope
-                // (not just this.data's own), and root watches the whole data tree.
-                // Over-notifies, but never misses a real change.
-                this.dataListener = () => this.recheck();
+                this.dataListener = () => this.recheckValue();
                 this.data.scopes.root.changes.addEventListener(this.dataListener);
             }
         }
     }
 
-    recheck() {
+    recheckValue() {
         if (this.attribute.type != 'script')
             return;
         const old = this.$value;

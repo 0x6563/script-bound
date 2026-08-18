@@ -1,67 +1,77 @@
 <div class="wrapper">
-    <h2>Please enter your info</h2>
-    <flow settings={"direction":"left-right"} $=($.personal)>
-        <input type="text" value&=($.firstName) settings={ "label": "First Name" }/>
-        <input type="text" value&=($.lastName) settings={ "label": "Last Name" } />
-    </flow>
-    <br/>
-    <hr/> 
-    <h1>Hello <($.personal.firstName)><if ($.personal.lastName)> <span><( $.personal.lastName )></span></if>!</h1>
-    <flow settings={"direction":"left-right"}>
-        <button class="click">
-            <script event="click">
-                $.counter = $.counter + 1;
-            </script>
-            Click this button
-        </button>
-        <h4 class="center">You've clicked that button <($.counter)> times!</h4>
-    </flow>
+    <h1>Hello <($.personal.name)>!</h1>
     <hr/>
-    <h4>Inputs</h4>
-    <table>
-        <tr>
-            <td><input type="text" value&=($.text)/></td>
-            <td><($.text)></td>
-        </tr>
-        <tr>
-            <td><input type="checkbox" value&=($.enabled)/></td>
-            <td><($.enabled)></td>
-        </tr>
-        <tr>
-            <td>
-                <for ($.colors)>
-                    <label><input type="radio" value&=($root.selectedColor)/> <($)></label>
+    <div class="settings-panel">
+        <h5>Name</h5>
+        <flow settings={"direction":"left-right"}>
+            <input type="text" value&=($.personal.name)/>
+            <span class="setting-value"><($.personal.name)></span>
+        </flow>    
+        <h5>Buttons</h5>
+        <flow settings={"direction":"left-right"}>
+            <button class="click">
+                <script event="click">
+                    $.counter = $.counter + 1;
+                </script>
+                Click this button
+            </button>
+             <span class="setting-value">You've clicked that button <($.counter)> times!</span>
+        </flow>
+        <h5>Are you sure?</h5>
+        <flow settings={"direction":"left-right"}>
+            <label> Yup<input type="checkbox" value&=($.yup)/></label>
+            <if ($.yup)>
+                <span class="setting-value">Good for you.</span>
+            </if>
+            <if (not $.yup)>
+                <span class="setting-value">This is awkward.</span>
+            </if>
+        </flow>
+        <h5>Favorite Food</h5>
+        <flow settings={"direction":"left-right"}>
+            <div class="radio-group">
+                <for ($.foods)>
+                    <label class="radio-option"><input type="radio" value&=($root.food)/> <($)></label>
                 </for>
-            </td>
-            <td><($.selectedColor)></td>
-        </tr>
-        <tr>
-            <td><input type="file" value&=($.file)/></td>
-            <td><($.file)></td>
-        </tr>
-    </table>
-    <em>Powered by:</em>
-    <flow settings={"direction":"left-right"}>
-        <for ($.dependencies)>
-            <a style="text-align:center;" href=($root.giturl .. $.slug)><($.name)></a>
-        </for>
-    </flow>
+            </div>
+            <span class="setting-value"><($.food)></span>
+        </flow>
+        <h5>Avatar</h5>
+        <flow settings={"direction":"left-right"}>
+            <input type="file" value&=($.file)/>
+            <span class="setting-value"><($.file)></span>
+        </flow>
+        <h5>Favorite Color</h5>
+        <flow settings={"direction":"left-right"}>
+            <input type="color" value&=($.color)/>
+            <span class="setting-value"><($.color)></span>
+        </flow>
+    </div>
     <hr/>
-    <h4>Pick a dependency:</h4>
-    <select value&=($.selectedSlug)>
-        <option value="">- choose one -</option>
+    <h4><em>Powered By</em></h4>
+    <div class="dependency-list">
+        <flow settings={"direction":"left-right"} >
         <for ($.dependencies)>
-            <option value=($.slug)><($.name)></option>
-        </for>
-    </select>
-    <!-- $= narrows scope to the query result, same as $=($.personal) does above with a plain reference -->
-    <if ($.selectedSlug)>
-        <div class="detail-card" $=(query d in $.dependencies filter d.slug == $.selectedSlug first d)>
-            <h4><($.name)></h4>
-            <p><($.description)></p>
-            <p><a href=($root.giturl .. $.slug)><($root.giturl .. $.slug)></a></p>
-        </div>
-    </if>
+            <span style="text-align:center">
+                <a href=($root.giturl .. $.slug)><($.name)></a>
+                <button class="info-icon" title="More info">
+                    <script event="click">
+                        if ($root.selectedSlug == $.slug) {
+                            $root.selectedSlug = '';
+                        } else {
+                            $root.selectedSlug = $.slug;
+                        }
+                    </script>
+                    ⓘ
+                </button>
+            </span> 
+        </for></flow>
+        <if ($.selectedSlug)>
+            <div $=(query d in $.dependencies filter d.slug == $.selectedSlug first d)>
+                <p class="dependency-description"><($.description)></p>
+            </div>
+        </if>
+    </div>
 </div>
 <style>
     .center{
@@ -77,49 +87,58 @@
     }
 
     input {
-        color: red;
+        color: blue;
         border: none;
         border-bottom: 2px solid black;
         font-size: 14px;
 
     }
-
     input:focus {
         outline: none;
         border-bottom: 2px solid blue;
     }
 
-    table td {
-        padding: 4px 8px;
-        text-align: left;
-    }
-    table {
-        table-layout:fixed;
-        width: 100%;
-        td{
-            width: 35%;
-        }
-        tr td:last-child{
-            text-align: right;
-        }
-    }
 
-    [data-component="select"] {
+    .radio-group {
         display: flex;
-        flex-direction: column;
+        gap: 12px;
+    }
+
+    .radio-option {
+        display: flex;
+        align-items: center;
         gap: 4px;
-        max-width: 240px;
+        font-weight: normal;
     }
 
-    .detail-card {
-        margin-top: 8px;
-        padding: 12px 16px;
-        max-width: 320px;
+    .setting-value {
+        color: #888;
+        font-size: 12px;
+        min-width: 60px;
+        text-align: right;
+    }
+ 
+    .info-icon {
+        background: none;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        line-height: 1;
+        font-size: 14px;
+        cursor: pointer;
+        color: #555;
+    }
+
+    .info-icon:hover {
+        color: #000;
+    }
+
+    .dependency-description {
+        margin: 8px 0;
+        padding: 8px 12px;
+        color: #555;
+        font-size: 13px;
         border: solid 1px #bbb;
-    }
-
-    .detail-card p {
-        margin: 4px 0;
     }
 
     [data-control] {

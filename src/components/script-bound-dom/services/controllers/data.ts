@@ -129,7 +129,8 @@ function ContextProxy(source: DataController) {
         set(target, key, value) {
             if (typeof key == 'symbol')
                 return false;
-            return !!(target.value[key] = Unmarshal(value));
+            target.value[key] = Unmarshal(value);
+            return true;
         },
         ownKeys(target) {
             return Object.keys(target.value);
@@ -159,7 +160,8 @@ function ObjectProxy(source: object | any[]) {
             return ValueProxy(target[key])
         },
         set(target, key, value) {
-            return !!(target[key] = Unmarshal(value));
+            target[key] = Unmarshal(value);
+            return true;
         },
         ownKeys(target) {
             return Object.keys(target);

@@ -1,14 +1,19 @@
 {
     "personal": {
-        "firstName": "Jane",
-        "lastName": "Doe"
+        "name": "Jane Doe"
     },
     "counter": 0,
     "text": "",
-    "enabled": false,
-    "colors": ["red", "green", "blue"],
-    "selectedColor": "red",
+    "foods": [
+        "Brisket Poutine",
+        "Bhel Puri",
+        "Torta de Milanesa"
+    ],
+    "food": "Torta de Milanesa",
+    "color": "red",
     "file": "",
+    "yup": false,
+    "selectedSlug": "",
     "giturl": "https://github.com/0x6563/",
     "html": "Data Defined <em style=\"color:blue;\">HTML</em>",
     "dependencies": [
