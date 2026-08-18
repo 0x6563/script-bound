@@ -129,6 +129,11 @@ function ContextProxy(source) {
         return ValueProxy(target.value);
       return ValueProxy(target.value[key]);
     },
+    set(target, key, value) {
+      if (typeof key == "symbol")
+        return false;
+      return !!(target.value[key] = Unmarshal(value));
+    },
     ownKeys(target) {
       return Object.keys(target.value);
     },
@@ -206,7 +211,11 @@ var BaseComponent = class {
   }
   initializeDataController() {
     const parentData = this.controller.parent.dataController;
-    this.controller.dataController = this.controller.node.attributes?.$ ? parentData.fork(this.controller.node.attributes.$) : parentData;
+    if (this.controller.node.attributes?.$) {
+      this.controller.dataController = parentData.fork(this.controller.node.attributes.$);
+    } else {
+      this.controller.dataController = parentData;
+    }
   }
   initializeComponentRegistry() {
     this.controller.componentDictionary = this.controller.parent.componentDictionary;
@@ -214,45 +223,120 @@ var BaseComponent = class {
   connect() {
     return [this.controller.application.createComment("")];
   }
+  afterConnect() {
+  }
   disconnect() {
   }
-  update(type, value) {
+  update(name, old, value) {
   }
 };
 
-// src/components/script-bound-dom/components/inputs/textbox.ts
-var Textbox = class extends BaseComponent {
+// src/components/script-bound-dom/components/inputs/input.ts
+var Input = class extends BaseComponent {
   input;
   connect() {
-    console.log(this.controller);
+    const type = this.controller.attributes.type?.value || "text";
+    switch (type) {
+      case "checkbox": {
+        this.connectCheckbox();
+        break;
+      }
+      case "radio": {
+        this.connectRadio();
+        break;
+      }
+      case "file": {
+        this.connectFile();
+        break;
+      }
+      default: {
+        this.connectText(type);
+        break;
+      }
+    }
+    return [this.input];
+  }
+  update(name, old, value) {
+  }
+  connectText(type) {
     this.input = this.controller.application.createNode("input", {
-      type: "text",
-      value: this.controller.attributes["value"]?.value
+      ...this.nativeAttributes(),
+      type,
+      value: this.controller.attributes.value?.value
     }, {
       change: (e) => {
-        console.log(e);
-        this.controller.attributes["value"].value = e.target.value;
+        this.controller.attributes.value.value = e.target.value;
       }
     });
-    console.log(this.input);
-    return [this.input];
+    this.update = (name, old, value) => {
+      if (name === "value") {
+        this.input.value = value;
+      }
+    };
   }
-  update(type, value) {
-    this.input?.setAttribute("value", value);
-    this.input.value = value;
+  connectCheckbox() {
+    this.input = this.controller.application.createNode("input", {
+      ...this.nativeAttributes(),
+      type: "checkbox"
+    }, {
+      change: (e) => {
+        this.controller.attributes.value.value = e.target.checked;
+      }
+    });
+    this.input.checked = !!this.controller.attributes.value?.value;
+    this.update = (name, old, value) => {
+      if (name === "value") {
+        this.input.checked = !!value;
+      }
+    };
   }
-};
-
-// src/components/script-bound-dom/components/inputs/checkbox.ts
-var Checkbox = class extends BaseComponent {
-  input;
-  connect() {
-    this.input = this.controller.application.createNode("input", { type: "checkbox", value: this.controller.dataController.value }, { change: (e) => this.controller.eventHandler({ event: "update", value: e.target.checked }) });
-    return [this.input];
+  connectRadio() {
+    this.input = this.controller.application.createNode("input", {
+      ...this.nativeAttributes(),
+      type: "radio"
+    }, {
+      change: (e) => {
+        if (e.target.checked) {
+          this.controller.attributes.value.value = this.controller.dataController.value;
+        }
+      }
+    });
+    this.syncChecked();
+    this.update = (name) => {
+      if (name === "value") {
+        this.syncChecked();
+      }
+    };
   }
-  update(type, value) {
-    this.input?.setAttribute("value", value);
-    this.input.value = value;
+  connectFile() {
+    this.input = this.controller.application.createNode("input", {
+      ...this.nativeAttributes(),
+      type: "file"
+    }, {
+      change: (e) => {
+        this.controller.attributes.value.value = e.target.files?.[0]?.name ?? "";
+      }
+    });
+  }
+  syncChecked() {
+    const own = this.controller.dataController.value;
+    const shared = this.controller.attributes.value?.value;
+    this.input.checked = own === shared;
+  }
+  nativeAttributes() {
+    const attributes = this.controller.htmlAttributes();
+    const result = {};
+    for (const key in attributes) {
+      if (key === "value" || key === "type") {
+        continue;
+      }
+      const v = attributes[key];
+      if (v !== null && typeof v === "object") {
+        continue;
+      }
+      result[key] = v;
+    }
+    return result;
   }
 };
 
@@ -356,8 +440,10 @@ var SelectComponent = class extends BaseComponent {
     this.controller.createChildren({ refNode });
     return [this.select];
   }
-  update(type, value) {
-    this.select.value = value;
+  update(name, old, value) {
+    if (name === "value") {
+      this.select.value = value;
+    }
   }
 };
 
@@ -437,10 +523,16 @@ var IfComponent = class extends BaseComponent {
     super.initialize();
     if (this.controller.node.expression) {
       this.condition = this.controller.dataController.fork({ type: "script", value: this.controller.node.expression });
-      this.condition.changes.addEventListener(() => this.update("", ""));
+      this.condition.changes.addEventListener(() => this.render());
     }
   }
-  update(type, value) {
+  afterConnect() {
+    this.render();
+  }
+  update(name, old, value) {
+    this.render();
+  }
+  render() {
     const enable = !!this.condition?.value;
     if (enable != this.enabled) {
       this.enabled = enable;
@@ -464,7 +556,13 @@ var ForComponent = class extends BaseComponent {
       this.controller.dataController = this.controller.parent.dataController.fork({ type: "script", value: this.controller.node.expression });
     }
   }
-  update(type, value) {
+  afterConnect() {
+    this.render();
+  }
+  update(name, old, value) {
+    this.render();
+  }
+  render() {
     const items = this.controller.dataController.value;
     if (this.cache == items) {
       return;
@@ -512,10 +610,7 @@ var ExpressionComponent = class extends BaseComponent {
 var SymbolText = Symbol("SymbolText");
 var SymbolExpression = Symbol("SymbolText");
 var ComponentsByName = {
-  textbox: Textbox,
-  text: Textbox,
-  input: Textbox,
-  checkbox: Checkbox,
+  input: Input,
   single: Single,
   tabs: Tabs,
   select: SelectComponent,
@@ -608,6 +703,9 @@ var AttributeController = class {
   data;
   attribute;
   $value = void 0;
+  controller;
+  name;
+  dataListener;
   get value() {
     return this.$value;
   }
@@ -619,18 +717,34 @@ var AttributeController = class {
   get binding() {
     return this.attribute.type == "script" && !!this.attribute.binding;
   }
-  constructor({ attribute, data }) {
+  constructor({ attribute, data, controller, name }) {
     this.attribute = attribute ? attribute : { type: "json", value: void 0 };
     this.data = data;
-    if (this.attribute.type == "json")
+    this.controller = controller;
+    this.name = name;
+    if (this.attribute.type == "json") {
       this.$value = this.attribute.value;
-    else
+    } else {
       this.recheck();
+      if (this.binding) {
+        this.dataListener = () => this.recheck();
+        this.data.scopes.root.changes.addEventListener(this.dataListener);
+      }
+    }
   }
   recheck() {
     if (this.attribute.type != "script")
       return;
+    const old = this.$value;
     this.$value = this.data.runScript(this.attribute.value);
+    if (old !== this.$value && this.controller && this.name !== void 0) {
+      this.controller.update(this.name, old, this.$value);
+    }
+  }
+  disconnect() {
+    if (this.dataListener) {
+      this.data.scopes.root.changes.removeEventListener(this.dataListener);
+    }
   }
 };
 
@@ -671,7 +785,7 @@ var ComponentController = class _ComponentController {
     this.events = "events" in this.node ? this.node.events : {};
     if (this.node.attributes) {
       for (const key in this.node.attributes) {
-        this.attributes[key] = new AttributeController({ data: this.dataController, attribute: this.node.attributes[key] });
+        this.attributes[key] = new AttributeController({ data: this.dataController, attribute: this.node.attributes[key], controller: this, name: key });
       }
     }
     const addListener = this.dataController !== this.parent.dataController || this.node.type == "expression";
@@ -681,27 +795,27 @@ var ComponentController = class _ComponentController {
     }
     if (this.events.load)
       this.dataController.runScript(this.events.load);
-    let initial = this.componentInstance.connect();
-    if (!initial?.length) {
-      initial = [this.application.createComment("")];
-    }
-    const endcap = initial[initial.length - 1];
+    const initial = this.componentInstance.connect();
     this.append(initial);
     if (!("refNode" in parameters)) {
       this.refNode.remove();
     }
-    this.refNode = endcap;
-    if ("expression" in this.node && this.node.expression) {
-      this.componentInstance?.update("", "");
-    }
+    this.refNode = initial[initial.length - 1];
+    this.componentInstance.afterConnect();
   }
   disconnect() {
     this.componentInstance?.disconnect();
     this.refNode.remove();
+    for (const key in this.attributes) {
+      this.attributes[key].disconnect();
+    }
     if (this.dataListener)
       this.dataController.changes.removeEventListener(this.dataListener);
     if (this.dataController !== this.parent.dataController)
       this.dataController.disconnect();
+  }
+  update(name, old, value) {
+    this.componentInstance.update(name, old, value);
   }
   eventHandler(e) {
     if (e.event == "update") {
@@ -757,7 +871,7 @@ var ComponentController = class _ComponentController {
     }
   }
   onDataChanges() {
-    this.componentInstance.update("value", this.dataController.value);
+    this.componentInstance.update("", void 0, this.dataController.value);
   }
 };
 
