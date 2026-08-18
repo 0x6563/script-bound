@@ -132,7 +132,8 @@ function ContextProxy(source) {
     set(target, key, value) {
       if (typeof key == "symbol")
         return false;
-      return !!(target.value[key] = Unmarshal(value));
+      target.value[key] = Unmarshal(value);
+      return true;
     },
     ownKeys(target) {
       return Object.keys(target.value);
@@ -159,7 +160,8 @@ function ObjectProxy(source) {
       return ValueProxy(target[key]);
     },
     set(target, key, value) {
-      return !!(target[key] = Unmarshal(value));
+      target[key] = Unmarshal(value);
+      return true;
     },
     ownKeys(target) {
       return Object.keys(target);
@@ -519,11 +521,13 @@ var Button = class extends BaseComponent {
 var IfComponent = class extends BaseComponent {
   enabled = false;
   condition;
+  rootListener;
   initialize() {
     super.initialize();
     if (this.controller.node.expression) {
       this.condition = this.controller.dataController.fork({ type: "script", value: this.controller.node.expression });
-      this.condition.changes.addEventListener(() => this.render());
+      this.rootListener = () => this.render();
+      this.condition.scopes.root.changes.addEventListener(this.rootListener);
     }
   }
   afterConnect() {
@@ -544,6 +548,9 @@ var IfComponent = class extends BaseComponent {
     }
   }
   disconnect() {
+    if (this.rootListener) {
+      this.condition?.scopes.root.changes.removeEventListener(this.rootListener);
+    }
     this.condition?.disconnect();
   }
 };
@@ -725,14 +732,14 @@ var AttributeController = class {
     if (this.attribute.type == "json") {
       this.$value = this.attribute.value;
     } else {
-      this.recheck();
+      this.$value = this.data.runScript(this.attribute.value);
       if (this.binding) {
-        this.dataListener = () => this.recheck();
+        this.dataListener = () => this.recheckValue();
         this.data.scopes.root.changes.addEventListener(this.dataListener);
       }
     }
   }
-  recheck() {
+  recheckValue() {
     if (this.attribute.type != "script")
       return;
     const old = this.$value;
