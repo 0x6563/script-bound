@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Script Bound - CDN Demo</title>
+<script src="https://cdn.jsdelivr.net/gh/0x6563/script-bound@app/dist/script-bound.js"></script>
+</head>
+<body>
+<script-bound></script-bound>
+<script>
+  const source = `<div class="wrapper">
+    <h1>Hello <($.personal.name)>!</h1>
+    <hr/>
+    <div class="settings-panel">
+        <h5>Name</h5>
+        <flow settings={"direction":"left-right"}>
+            <input type="text" value&=($.personal.name)/>
+            <span class="setting-value"><($.personal.name)></span>
+        </flow>
+        <h5>Buttons</h5>
+        <flow settings={"direction":"left-right"}>
+            <button class="click">
+                <script event="click">
+                    $.counter = $.counter + 1;
+                <\/script>
+                Click this button
+            </button>
+             <span class="setting-value">You've clicked that button <($.counter)> times!</span>
+        </flow>
+        <h5>Are you sure?</h5>
+        <flow settings={"direction":"left-right"}>
+            <label> Yup<input type="checkbox" value&=($.yup)/></label>
+            <if ($.yup)>
+                <span class="setting-value">Good for you.</span>
+            </if>
+            <if (not $.yup)>
+                <span class="setting-value">This is awkward.</span>
+            </if>
+        </flow>
+        <h5>Favorite Food</h5>
+        <flow settings={"direction":"left-right"}>
+            <div class="radio-group">
+                <for ($.foods)>
+                    <label class="radio-option"><input type="radio" value&=($root.food)/> <($)></label>
+                </for>
+            </div>
+            <span class="setting-value"><($.food)></span>
+        </flow>
+        <h5>Avatar</h5>
+        <flow settings={"direction":"left-right"}>
+            <input type="file" value&=($.file)/>
+            <span class="setting-value"><($.file)></span>
+        </flow>
+        <h5>Favorite Color</h5>
+        <flow settings={"direction":"left-right"}>
+            <input type="color" value&=($.color)/>
+            <span class="setting-value"><($.color)></span>
+        </flow>
+    </div>
+    <hr/>
+    <h4><em>Powered By</em></h4>
+    <div class="dependency-list">
+        <flow settings={"direction":"left-right"} >
+        <for ($.dependencies)>
+            <span style="text-align:center">
+                <a href=($root.giturl .. $.slug)><($.name)></a>
+                <button class="info-icon" title="More info">
+                    <script event="click">
+                        if ($root.selectedSlug == $.slug) {
+                            $root.selectedSlug = '';
+                        } else {
+                            $root.selectedSlug = $.slug;
+                        }
+                    <\/script>
+                    ⓘ
+                </button>
+            </span>
+        </for></flow>
+        <if ($.selectedSlug)>
+            <div $=(query d in $.dependencies filter d.slug == $.selectedSlug first d)>
+                <p class="dependency-description"><($.description)></p>
+            </div>
+        </if>
+    </div>
+</div>
+<style>
+    .center{
+        text-align:center;
+    }
+    .wrapper{
+        padding: 24px;
+    }
+
+    .click{
+        background: blue;
+        color: #FFF;
+    }
+
+    input {
+        color: blue;
+        border: none;
+        border-bottom: 2px solid black;
+        font-size: 14px;
+
+    }
+    input:focus {
+        outline: none;
+        border-bottom: 2px solid blue;
+    }
+
+
+    .radio-group {
+        display: flex;
+        gap: 12px;
+    }
+
+    .radio-option {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-weight: normal;
+    }
+
+    .setting-value {
+        color: #888;
+        font-size: 12px;
+        min-width: 60px;
+        text-align: right;
+    }
+
+    .info-icon {
+        background: none;
+        width: 20px;
+        height: 20px;
+        padding: 0;
+        line-height: 1;
+        font-size: 14px;
+        cursor: pointer;
+        color: #555;
+    }
+
+    .info-icon:hover {
+        color: #000;
+    }
+
+    .dependency-description {
+        margin: 8px 0;
+        padding: 8px 12px;
+        color: #555;
+        font-size: 13px;
+        border: solid 1px #bbb;
+    }
+
+    [data-control] {
+        border: solid 1px #bbb;
+        padding: 8px !important;
+    }
+</style>`;
+
+  const data = {
+    "personal": {
+        "name": "Jane Doe"
+    },
+    "counter": 0,
+    "text": "",
+    "foods": [
+        "Brisket Poutine",
+        "Bhel Puri",
+        "Torta de Milanesa"
+    ],
+    "food": "Torta de Milanesa",
+    "color": "red",
+    "file": "",
+    "yup": false,
+    "selectedSlug": "",
+    "giturl": "https://github.com/0x6563/",
+    "html": "Data Defined <em style=\"color:blue;\">HTML</em>",
+    "dependencies": [
+        {
+            "slug": "script-bound",
+            "name": "Script Bound",
+            "description": "The framework rendering this very page - it turns XML-like templates into a live, reactive DOM."
+        },
+        {
+            "slug": "grammar-well",
+            "name": "Grammar Well",
+            "description": "An Earley-based parser generator, compiling .well grammar files into JS parsers. Both XML-like and MCI's own script grammar are built with it."
+        },
+        {
+            "slug": "moderate-code-interpreter",
+            "name": "Moderate Code Interpreter",
+            "description": "The embedded scripting language that powers every expression and <script> block in this sample - including the query that found this description."
+        }
+    ]
+  };
+
+  const el = document.querySelector('script-bound');
+  el.data = data;
+  el.source = source;
+</script>
+</body>
+</html>

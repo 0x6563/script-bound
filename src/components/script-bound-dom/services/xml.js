@@ -1,4 +1,4 @@
-// Generated automatically by Grammar-Well, version unknown 
+// Generated automatically by Grammar-Well, version 2.3.0 
 // https://github.com/0x6563/grammar-well
 
 
@@ -56,6 +56,7 @@ function extractPair(kv, output) {
 
 
 class grammar {
+    state = {};
     artifacts = {
         grammar: {
             rules: {

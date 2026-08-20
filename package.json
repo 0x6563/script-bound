@@ -5,8 +5,12 @@
   "type": "module",
   "main": "./dist/script-bound.esm.js",
   "module": "./dist/script-bound.esm.js",
+  "types": "./dist/script-bound.esm.d.ts",
   "exports": {
-    ".": "./dist/script-bound.esm.js",
+    ".": {
+      "types": "./dist/script-bound.esm.d.ts",
+      "default": "./dist/script-bound.esm.js"
+    },
     "./iife": "./dist/script-bound.js"
   },
   "files": [
@@ -21,8 +25,8 @@
     "type-check": "vue-tsc --build"
   },
   "dependencies": {
-    "grammar-well": "^2.0.1",
-    "moderate-code-interpreter": "^0.0.15",
+    "grammar-well": "^2.3.0",
+    "moderate-code-interpreter": "^0.0.16",
     "object-mutation-observer": "^2.0.5"
   },
   "devDependencies": {

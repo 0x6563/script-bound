@@ -932,6 +932,7 @@ function extractArray({ data }) {
   return output;
 }
 var grammar = class {
+  state = {};
   artifacts = {
     grammar: {
       rules: {
